@@ -2,16 +2,16 @@ import { Observable, Subscription } from 'rxjs';
 
 import { Collection } from './collection';
 import { Account } from './auth';
-import { SakeSocket } from './socket';
-import { SAKE_JWT, SAKE_USER } from './utils/utils';
+import { SakiSocket } from './socket';
+import { Saki_JWT, Saki_USER } from './utils/utils';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
 `${window.location.host}` || 'localhost:8000';
 const defaultSecure = typeof window !== 'undefined' && window.location &&
 window.location.protocol === 'https:' || false;
 
-export default class Sake {
-  wsSubject: SakeSocket<any>;
+export default class Saki {
+  wsSubject: SakiSocket<any>;
   websocketURL: string;
   account: Account;
   authType: string;
@@ -19,12 +19,12 @@ export default class Sake {
   constructor({
     host = defaultHost,
     secure = defaultSecure,
-    path = 'sake',
+    path = 'saki',
     WebSocketCtor = WebSocket
   } = {}) {
     this.websocketURL = `ws${secure ? 's' : ''}:\/\/${host}\/${path}`;
     this.account = new Account();
-    this.wsSubject = new SakeSocket(
+    this.wsSubject = new SakiSocket(
       this.websocketURL,
       this.account.handshake.bind(this.account),
       this.account

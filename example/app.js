@@ -3,7 +3,7 @@ const fs = require('fs');
 const url = require('url');
 const path = require('path');
 
-const {Server: SakeServer} = require('../server/lib/sake');
+const {Server: SakiServer} = require('../server/lib/Saki');
 const db = require('./db');
 
 const server = http.createServer((req, res) => {
@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.end(content);
 }).listen(8000);
 
-const Sake = new SakeServer(server, {
+const Saki = new SakiServer(server, {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,

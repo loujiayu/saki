@@ -1,11 +1,11 @@
 import { root } from 'rxjs/util/root';
-import { SAKE_JWT, SAKE_USER } from './utils/utils';
+import { Saki_JWT, Saki_USER } from './utils/utils';
 
 export class Storage {
   constructor() {}
   setItem(user, token) {
-    root.localStorage.setItem(SAKE_USER, user);
-    root.localStorage.setItem(SAKE_JWT, token);
+    root.localStorage.setItem(Saki_USER, user);
+    root.localStorage.setItem(Saki_JWT, token);
   }
   getItem(key) {
     return root.localStorage.getItem(key);
@@ -14,8 +14,8 @@ export class Storage {
     return root.localStorage.removeItem(key);
   }
   clear() {
-    root.localStorage.removeItem(SAKE_JWT);
-    root.localStorage.removeItem(SAKE_USER);
+    root.localStorage.removeItem(Saki_JWT);
+    root.localStorage.removeItem(Saki_USER);
   }
 }
 
@@ -58,7 +58,7 @@ export class Account {
     } else if (this.authType === 'login') {
       return { method: this.authType, userInfo: this.userInfo };
     } else if (this.authType === 'token') {
-      const token = this.get(SAKE_JWT);
+      const token = this.get(Saki_JWT);
       if (typeof token === 'string') {
         return { method: this.authType, token};
       } else {

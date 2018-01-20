@@ -1,7 +1,7 @@
 import { WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/observable/dom/WebSocketSubject';
 import { BehaviorSubject, Observable, Subject, Observer, Subscription } from 'rxjs';
 import { Account } from './auth';
-import { SAKE_USER } from './utils/utils';
+import { Saki_USER } from './utils/utils';
 
 import 'rxjs/add/operator/share';
 import 'rxjs/add/operator/concat';
@@ -19,7 +19,7 @@ interface Response {
   error?: any;
 }
 
-export class SakeSocket<T> extends Subject<T> {
+export class SakiSocket<T> extends Subject<T> {
   socket: WebSocketSubject<any>;
   wsSubjectConfig: WebSocketSubjectConfig;
   handshakeSub: Subscription | null;
@@ -110,7 +110,7 @@ export class SakeSocket<T> extends Subject<T> {
       .concat(this.requestObservable({
         type,
         options,
-        internal: {user: this.account.get(SAKE_USER)}
+        internal: {user: this.account.get(Saki_USER)}
       }))
       .concatMap((resp: Response) => {
         // if (resp.error) {

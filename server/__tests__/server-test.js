@@ -2,7 +2,7 @@ const http = require('http');
 const path = require('path');
 const r = require('rethinkdb');
 const root = path.resolve(__dirname, '../..');
-const SakeServer = require(path.resolve(root, 'server/lib/Sake')).Server;
+const SakiServer = require(path.resolve(root, 'server/lib/Saki')).Server;
 
 const db = {
   name: 'newa',
@@ -11,7 +11,7 @@ const db = {
 };
 let conn;
 
-const server = new SakeServer(http.createServer().listen(8000), {
+const server = new SakiServer(http.createServer().listen(8000), {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,

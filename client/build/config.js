@@ -27,7 +27,7 @@ function getConfig(name) {
       file: opts.dest,
       format: opts.format,
       sourcemap: true,
-      name: 'Sake'
+      name: 'Saki'
     }
   };
 

@@ -4,15 +4,15 @@ const http = require('http');
 global.WebSocket = require('ws');
 
 const root = path.resolve(__dirname, '../..');
-const Sake = require(path.resolve(root, 'client/dist/client'));
-const SakeServer = require(path.resolve(root, 'server/lib/sake')).Server;
+const Saki = require(path.resolve(root, 'client/dist/client'));
+const SakiServer = require(path.resolve(root, 'server/lib/saki')).Server;
 const db = {
   name: 'newa',
   port: 28015,
   host: '127.0.0.1'
 };
-const sk = new Sake();
-const server = new SakeServer(http.createServer().listen(8000), {
+const sk = new Saki();
+const server = new SakiServer(http.createServer().listen(8000), {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,
@@ -42,7 +42,6 @@ describe('unauthenticated', () => {
         done();
       }
     });
-    sk.connect('unauthenticated');
   });
 });
 

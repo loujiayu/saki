@@ -3,5 +3,5 @@ export function invariant(check: boolean, message: string) {
       throw new Error(message);
 }
 
-export const SAKE_JWT = 'sake-jwt';
-export const SAKE_USER = 'sake-user';
+export const Saki_JWT = 'saki-jwt';
+export const Saki_USER = 'saki-user';
