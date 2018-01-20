@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "outDir": "lib",
+    "sourceMap": false,
+    "declaration": true,
+    "module": "es2015",
+    "removeComments": false,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": true,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "typeRoots": [
+      "node_modules/@types/"
+    ]
+  },
+  "include": [
+    "src"
+  ]
+}

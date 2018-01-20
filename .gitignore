@@ -1,0 +1,6 @@
+.vscode
+test.ts
+**/lib/
+**/node_modules/
+**/yarn.lock
+client/dist/

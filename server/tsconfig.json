@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "outDir": "lib",
+    "sourceMap": true,
+    "declaration": true,
+    "module": "commonjs",
+    "removeComments": false,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": true,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "typeRoots": [
+      "node_modules/@types/"
+    ]
+  },
+  "include": [
+    "src"
+  ]
+}
