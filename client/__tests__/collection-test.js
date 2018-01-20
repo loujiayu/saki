@@ -1,26 +1,54 @@
+const path = require('path');
+const http = require('http');
+
+global.WebSocket = require('ws');
+
+const root = path.resolve(__dirname, '../..');
+const Sake = require(path.resolve(root, 'client/dist/client'));
+const SakeServer = require(path.resolve(root, 'server/lib/sake')).Server;
+const db = {
+  name: 'newa',
+  port: 28015,
+  host: '127.0.0.1'
+};
+const sk = new Sake();
+const server = new SakeServer(http.createServer().listen(8000), {
+  projectName: db.name,
+  rdbPort: db.port,
+  rdbHost: db.host,
+  rules: {
+    'test': {
+      update: () => true,
+      insert: () => true,
+      remove: () => true,
+      fetch: () => true
+    }
+  }
+});
+
 beforeAll(() => {
-  global.sk.connect('unauthenticated');
+  sk.connect('unauthenticated');
 });
 
 afterAll(() => {
-  global.server.close();
+  server.close();
 });
 
 describe('unauthenticated', () => {
   test('unauthenticated', done => {
-    global.sk.wsSubject.handshake.subscribe({
+    sk.wsSubject.handshake.subscribe({
       next: resp => {
         expect(resp).toEqual({method: 'unauthenticated', requestId: 0});
         done();
       }
     });
-    global.sk.connect('unauthenticated');
+    sk.connect('unauthenticated');
   });
 });
 
 describe('server status', () => {
   test('server ready', done => {
-    global.sk.isReady(status => {
+    sk.isReady(status => {
       expect(status).toBe('ready');
       done();
     });
