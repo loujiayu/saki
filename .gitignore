@@ -1,6 +1,5 @@
 .vscode
-test.ts
 **/lib/
 **/node_modules/
-**/yarn.lock
+**/yarn-error.log
 client/dist/
