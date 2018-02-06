@@ -1,11 +1,26 @@
 {
-  "name": "client",
+  "name": "saki",
   "version": "0.0.1",
-  "main": "index.js",
+  "main": "dist/client.js",
   "license": "MIT",
+  "author": "Jan Lou",
   "scripts": {
     "dev": "rollup -w -c build/config.js --environment TARGET:web-dev",
     "test": "jest"
+  },
+  "keywords": [
+    "rxjs",
+    "rethinkdb"
+  ],
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loujiayu/sake.git"
+  },
+  "bugs": {
+    "url": "https://github.com/loujiayu/sake/issues"
   },
   "devDependencies": {
     "@types/rx": "^4.1.1",

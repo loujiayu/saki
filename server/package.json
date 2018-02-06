@@ -1,11 +1,25 @@
 {
-  "name": "server",
+  "name": "saki-server",
   "version": "0.0.1",
-  "main": "index.js",
+  "main": "lib/saki.js",
   "license": "MIT",
   "scripts": {
     "test": "jest"
   },
+  "keywords": [
+    "rethinkdb"
+  ],
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loujiayu/sake.git"
+  },
+  "bugs": {
+    "url": "https://github.com/loujiayu/sake/issues"
+  },
+  "author": "Jan Lou",
   "devDependencies": {
     "@types/bluebird": "^3.5.17",
     "@types/jsonwebtoken": "^7.2.3",
