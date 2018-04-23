@@ -191,6 +191,41 @@ describe('read', () => {
   });
 });
 
+describe('transformations', () => {
+  let testID = 'transform-test-id';
+  let mockSendResponse;
+  let mockSendError;
+  beforeEach(() => {
+    mockSendResponse = jest.fn((id, data) => {});
+    mockSendError = jest.fn((id, error) => {});
+    server.__proto__.sendResponse = mockSendResponse;
+    server.__proto__.sendError = mockSendError;
+    return rethinkTestTable.insert([{
+      name: 'john',
+      age: 25
+    }, {
+      name: 'bob',
+      age: 29
+    }, {
+      name: 'sam',
+      age: 20
+    }]).run(conn);
+  });
+  afterEach(() => {
+    return rethinkTestTable.get(testID).delete().run(conn);
+  });
+  test('limit', done => {
+    server.handleRequest({
+      type: 'query',
+      internal: {user: null},
+      options: {collection: 'test', limit: 2}
+    }).then(() => {
+      expect(mockSendResponse.mock.calls).toHaveLength(3);
+      done();
+    })
+  })
+});
+
 describe('remove', () => {
   let testID = 'remove-test-id';
   let mockSendResponse;

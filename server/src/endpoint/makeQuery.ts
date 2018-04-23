@@ -13,11 +13,15 @@ function find(query, selector) {
 export function makeQuery(rawRequest, collections): r.Operation<any> {
   const {
     collection,
-    selector
+    selector,
+    limit
   } = rawRequest;
-  const query = collections.get(collection).table;
+  let query = collections.get(collection).table;
   if (selector) {
-    return find(query, selector);
+    query = find(query, selector);
+  }
+  if (limit) {
+    query = query.limit(limit);
   }
   return query;
 }

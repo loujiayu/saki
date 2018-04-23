@@ -21,7 +21,7 @@ export default class ReqlConnection {
     };
     this.db = projectName;
     this.readyPromise = this.connect();
-    this.userTableName = 'hz_users';
+    this.userTableName = 'users';
   }
 
   reconnect() {
@@ -43,12 +43,26 @@ export default class ReqlConnection {
         console.error(`error in rethinkdb ${error}`);
         this.reconnect();
       });
-      const exist: boolean = await (r.db(this.db).tableList() as any)
-        .contains(this.userTableName)
+      await (r.dbList() as any)
+        .contains(this.db)
+        .do(exist => {
+          return r.branch(
+            exist,
+            r.expr(null),
+            r.dbCreate(this.db) as any
+          )
+        })
         .run(this._conn);
-      if (!exist) {
-        await r.db(this.db).tableCreate(this.userTableName, { primary_key: 'username' }).run(this._conn);
-      }
+      await (r.db(this.db).tableList() as any)
+        .contains(this.userTableName)
+        .do(exist => {
+          return r.branch(
+            exist,
+            r.expr(null),
+            r.db(this.db).tableCreate(this.userTableName, { primary_key: 'username' }) as any
+          )
+        })
+        .run(this._conn);
       return this._conn;
     } catch (error) {
       console.error(error);

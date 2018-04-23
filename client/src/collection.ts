@@ -6,6 +6,7 @@ export interface IQuery {
   collection: string;
   selector?: Object | string;
   single?: boolean;
+  limit?: number;
 }
 
 function errorHandle(name: string, req: Object): Observable<any> {
@@ -127,5 +128,9 @@ export class Collection {
 
   findOne(selector: string | Object): Collection {
     return new Collection(this.sendRequest, {...this.query, selector, single: true});
+  }
+
+  limit(count: number): Collection {
+    return new Collection(this.sendRequest, {...this.query, limit: count});
   }
 }
