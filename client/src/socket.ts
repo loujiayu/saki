@@ -43,14 +43,14 @@ export class SakiSocket<T> extends Subject<T> {
       }
     };
 
-    // this.keepalive = Observable
-    //   .timer(1000 * keepalive, 1000 * keepalive)
-    //   .map(() => this.requestObservable({type: 'keepalive'}).subscribe({
-    //     next: m => {
-    //       console.log(m);
-    //     }
-    //   }))
-    //   .publish();
+    this.keepalive = Observable
+      .timer(1000 * keepalive, 1000 * keepalive)
+      .map(() => this.requestObservable({type: 'keepalive'}).subscribe({
+        next: m => {
+          console.log(m);
+        }
+      }))
+      .publish();
 
     this.account = account;
     this.requestCounter = 0;
@@ -91,7 +91,6 @@ export class SakiSocket<T> extends Subject<T> {
             }
           }
         });
-      // this.handshakeSub.add(this.keepalive.connect());
     }
   }
 
@@ -112,6 +111,7 @@ export class SakiSocket<T> extends Subject<T> {
             console.log(err);
           }}
         );
+      this.handshakeSub.add(this.keepalive.connect()); 
     }
     return this.handshake;
   }
@@ -143,22 +143,22 @@ export class SakiSocket<T> extends Subject<T> {
       });
   }
 
-  requestObservable(data: any) {
+  requestObservable(data: any): Observable<any> {
     const request = this.getRequest(data);
     return Observable.create((observer: Observer<any>) => {
       this.send(request);
       const subscription = this.socket
-        // .filter(resp => resp.requestId === request.requestId)
+        .filter(resp => resp.requestId === request.requestId)
         .subscribe(
-          // (resp: Response) => {
-          //   observer.next(resp);
-          // },
-          // err => observer.error(err)
+          (resp: Response) => {
+            observer.next(resp);
+          },
+          err => observer.error(err)
         );
-      // return () => {
-      //   this.send({requestId: request.requestId, type: 'unsubscribe'});
-      //   subscription.unsubscribe();
-      // };
+      return () => {
+        this.send({requestId: request.requestId, type: 'unsubscribe'});
+        subscription.unsubscribe();
+      };
     });
   }
 }

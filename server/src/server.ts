@@ -182,7 +182,7 @@ export class Server {
       this.removeRequest(rawRequest.requestId);
       return Promise.resolve();
     } else if (rawRequest.type === 'keepalive') {
-      this.sendResponse(rawRequest, { status: 'complete' });
+      this.sendResponse(rawRequest.requestId, { type: 'keepalive', status: 'complete' });
       return Promise.resolve();
     }
     if (!rawRequest.internal || !rawRequest.options) {
