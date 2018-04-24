@@ -68,10 +68,13 @@ export class Server {
       const ws_options = { path: this.path };
 
       const add_websocket = server => {
-        const ws_server = new websocket.Server(Object.assign({server}, ws_options))
+        const ws_server = new websocket.Server(Object.assign({ server }, ws_options))
           .on('error', error => console.error(`Websocket server error: ${error}`))
           .on('connection', socket => {
             this.socket = socket;
+            socket.on('error', (code, msg) => {
+              console.log(`Received error from client: ${msg} (${code})`)
+            })
             socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
           });
         this.wsServers.push(ws_server);
@@ -113,9 +116,9 @@ export class Server {
   }
   validate(operation: string, collection: string, rawRequest: IRequest): boolean {
     const rule = this.rules[collection];
-    if (!rawRequest.internal || !rawRequest.options ) return false;
+    if (!rawRequest.internal || !rawRequest.options) return false;
 
-    const { internal: { user }, options: { selector, data }} = rawRequest;
+    const { internal: { user }, options: { selector, data } } = rawRequest;
     switch (operation) {
       case 'update':
       case 'upsert':
@@ -140,6 +143,7 @@ export class Server {
     this.rules = rules;
   }
   handleHandshake(data) {
+    console.log(data);
     const request: IRequest = this.parseRequest(data);
     this.auth.handshake(request).then(res => {
       let info;
@@ -147,14 +151,14 @@ export class Server {
         info = { method: request.method, error: res.error };
         this.socket.once('message', msg => this.errorWrapSocket(() => this.handleHandshake(msg)))
       } else {
-        info = {token: res.token, user: res.user, method: request.method};
+        info = { token: res.token, user: res.user, method: request.method };
         this.socket.on('message', msg => {
           this.errorWrapSocket(() => this.handleRequest(msg));
         });
       }
       this.sendResponse(request.requestId, info);
     }).catch((err: JsonWebTokenError) => {
-      this.sendResponse(request.requestId, {error: err.message});
+      this.sendResponse(request.requestId, { error: err.message });
     });
   }
 
@@ -173,8 +177,12 @@ export class Server {
 
   handleRequest(data): Promise<any> {
     const rawRequest: IRequest = this.parseRequest(data);
+    console.log(data);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
+      return Promise.resolve();
+    } else if (rawRequest.type === 'keepalive') {
+      this.sendResponse(rawRequest, { status: 'complete' });
       return Promise.resolve();
     }
     if (!rawRequest.internal || !rawRequest.options) {

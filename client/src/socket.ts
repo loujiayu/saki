@@ -1,5 +1,5 @@
 import { WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/observable/dom/WebSocketSubject';
-import { BehaviorSubject, Observable, Subject, Observer, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Observer, Subscription, ConnectableObservable } from 'rxjs';
 import { Account } from './auth';
 import { Saki_USER } from './utils/utils';
 
@@ -27,8 +27,9 @@ export class SakiSocket<T> extends Subject<T> {
   requestCounter: number;
   handshake: Subject<any>;
   account: Account;
+  keepalive: ConnectableObservable<any>;
 
-  constructor(url, private _handshakeMaker, account) {
+  constructor(url, private _handshakeMaker, account, keepalive = 3) {
     super();
     this.wsSubjectConfig = {
       url,
@@ -41,6 +42,16 @@ export class SakiSocket<T> extends Subject<T> {
         }
       }
     };
+
+    // this.keepalive = Observable
+    //   .timer(1000 * keepalive, 1000 * keepalive)
+    //   .map(() => this.requestObservable({type: 'keepalive'}).subscribe({
+    //     next: m => {
+    //       console.log(m);
+    //     }
+    //   }))
+    //   .publish();
+
     this.account = account;
     this.requestCounter = 0;
     this.handshake = new Subject<T>();
@@ -80,6 +91,7 @@ export class SakiSocket<T> extends Subject<T> {
             }
           }
         });
+      // this.handshakeSub.add(this.keepalive.connect());
     }
   }
 
@@ -131,22 +143,22 @@ export class SakiSocket<T> extends Subject<T> {
       });
   }
 
-  requestObservable(data: any): Observable<any> {
+  requestObservable(data: any) {
     const request = this.getRequest(data);
     return Observable.create((observer: Observer<any>) => {
       this.send(request);
       const subscription = this.socket
-        .filter(resp => resp.requestId === request.requestId)
+        // .filter(resp => resp.requestId === request.requestId)
         .subscribe(
-          (resp: Response) => {
-            observer.next(resp);
-          },
-          err => observer.error(err)
+          // (resp: Response) => {
+          //   observer.next(resp);
+          // },
+          // err => observer.error(err)
         );
-      return () => {
-        this.send({requestId: request.requestId, type: 'unsubscribe'});
-        subscription.unsubscribe();
-      };
+      // return () => {
+      //   this.send({requestId: request.requestId, type: 'unsubscribe'});
+      //   subscription.unsubscribe();
+      // };
     });
   }
 }

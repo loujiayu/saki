@@ -211,7 +211,7 @@ astral-regex@^1.0.0:
 
 async-limiter@~1.0.0:
   version "1.0.0"
-  resolved "http://registry.npm.taobao.org/async-limiter/download/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
+  resolved "https://registry.npmjs.org/async-limiter/-/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
 
 async@^1.4.0:
   version "1.5.2"
@@ -3012,10 +3012,6 @@ uid-number@^0.0.6:
   version "0.0.6"
   resolved "http://registry.npm.taobao.org/uid-number/download/uid-number-0.0.6.tgz#0ea10e8035e8eb5b8e4449f06da1c730663baa81"
 
-ultron@~1.1.0:
-  version "1.1.0"
-  resolved "http://registry.npm.taobao.org/ultron/download/ultron-1.1.0.tgz#b07a2e6a541a815fc6a34ccd4533baec307ca864"
-
 util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "http://registry.npm.taobao.org/util-deprecate/download/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
@@ -3141,13 +3137,11 @@ write@^0.2.1:
   dependencies:
     mkdirp "^0.5.1"
 
-ws@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/ws/-/ws-4.0.0.tgz#bfe1da4c08eeb9780b986e0e4d10eccd7345999f"
+ws@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.npmjs.org/ws/-/ws-5.1.1.tgz#1d43704689711ac1942fd2f283e38f825c4b8b95"
   dependencies:
     async-limiter "~1.0.0"
-    safe-buffer "~5.1.0"
-    ultron "~1.1.0"
 
 xml-name-validator@^2.0.1:
   version "2.0.1"

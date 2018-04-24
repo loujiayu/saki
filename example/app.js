@@ -6,6 +6,11 @@ const path = require('path');
 const {Server: SakiServer} = require('../server/lib/Saki');
 const db = require('./db');
 
+// process.on('uncaughtException', (err) => {
+//   console.log(err);
+//   console.log(err.stack);
+// })
+
 const server = http.createServer((req, res) => {
   const html = fs.readFileSync('./index.html', 'utf8');
   const client = fs.readFileSync('../client/dist/client.js');
@@ -23,7 +28,11 @@ const server = http.createServer((req, res) => {
   const {type, content} = mime[ext] || mime['./'];
   res.setHeader('Content-type', type);
   res.end(content);
-}).listen(8000);
+}).listen(8100);
+
+server.on('error', error => {
+  console.log(error);
+})
 
 const Saki = new SakiServer(server, {
   projectName: db.name,
