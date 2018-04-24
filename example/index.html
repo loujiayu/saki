@@ -10,6 +10,9 @@
     <script>
       const sk = new Saki();
       sk.connect('unauthenticated');
+      sk.collection('projects').fetch().subscribe(val => {
+        console.log(val);
+      })
       // const ss = sk.collection('test');
       // ss.watch().subscribe(val => {
       //   console.log(val);

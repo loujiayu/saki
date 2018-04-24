@@ -44,6 +44,12 @@ const Saki = new SakiServer(server, {
       insert: () => true,
       remove: () => true,
       fetch: () => true
+    },
+    "projects": {
+      update: () => true,
+      insert: () => true,
+      remove: () => true,
+      fetch: () => true
     }
   }
 });

@@ -7,7 +7,7 @@ import Request, { IRequest } from './request';
 import Auth from './auth';
 import Collection from './collection';
 import ReqlConnection from './reql_connection';
-import { invariant } from './utils/utils';
+import { invariant, parseRules } from './utils/utils';
 import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 import config from './config';
 
@@ -22,10 +22,10 @@ const endpoints = {
 };
 
 export interface IRule {
-  update?: Function
-  remove?: Function
-  insert?: Function
-  fetch?: Function
+  update: Function
+  remove: Function
+  insert: Function
+  fetch: Function
 }
 
 export class Server {
@@ -49,13 +49,9 @@ export class Server {
     this.wsServers = [];
     this.collections = new Map();
     this.requests = new Map();
-    this.rules = this.opts.rules;
+    this.rules = parseRules(this.opts.rules);
 
     try {
-      invariant(
-        !!this.rules,
-        `rules must be defined, got: ${this.rules}`
-      );
       for (const collection in this.rules) {
         this.collections.set(collection, new Collection(this.opts.projectName, collection, this));
       }
@@ -72,10 +68,10 @@ export class Server {
           .on('error', error => console.error(`Websocket server error: ${error}`))
           .on('connection', socket => {
             this.socket = socket;
-            socket.on('error', (code, msg) => {
+            this.socket.on('error', (code, msg) => {
               console.log(`Received error from client: ${msg} (${code})`)
             })
-            socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
+            this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
           });
         this.wsServers.push(ws_server);
       };
@@ -93,6 +89,7 @@ export class Server {
       console.log(error);
     }
   }
+  
   getRequestHandler(request): Function {
     return this.requestHandlers.get(request.type) as Function;
   }
@@ -143,7 +140,6 @@ export class Server {
     this.rules = rules;
   }
   handleHandshake(data) {
-    console.log(data);
     const request: IRequest = this.parseRequest(data);
     this.auth.handshake(request).then(res => {
       let info;
@@ -177,7 +173,6 @@ export class Server {
 
   handleRequest(data): Promise<any> {
     const rawRequest: IRequest = this.parseRequest(data);
-    console.log(data);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
       return Promise.resolve();

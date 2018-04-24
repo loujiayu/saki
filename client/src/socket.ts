@@ -29,7 +29,7 @@ export class SakiSocket<T> extends Subject<T> {
   account: Account;
   keepalive: ConnectableObservable<any>;
 
-  constructor(url, private _handshakeMaker, account, keepalive = 3) {
+  constructor(url, private _handshakeMaker, account, keepalive = 60) {
     super();
     this.wsSubjectConfig = {
       url,
@@ -45,11 +45,7 @@ export class SakiSocket<T> extends Subject<T> {
 
     this.keepalive = Observable
       .timer(1000 * keepalive, 1000 * keepalive)
-      .map(() => this.requestObservable({type: 'keepalive'}).subscribe({
-        next: m => {
-          console.log(m);
-        }
-      }))
+      .map(() => this.requestObservable({type: 'keepalive'}).subscribe())
       .publish();
 
     this.account = account;
