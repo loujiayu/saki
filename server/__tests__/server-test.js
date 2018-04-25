@@ -215,8 +215,8 @@ describe('transformations', () => {
     }).then(() => {
       expect(mockSendResponse.mock.calls).toHaveLength(3);
       done();
-    })
-  })
+    });
+  });
 });
 
 describe('remove', () => {

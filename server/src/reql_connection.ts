@@ -1,4 +1,5 @@
 import * as r from 'rethinkdb';
+import { ensureDB, ensureTable } from './utils/rethinkdbExtra';
 
 export default class ReqlConnection {
   rdbConfig;
@@ -43,26 +44,8 @@ export default class ReqlConnection {
         console.error(`error in rethinkdb ${error}`);
         this.reconnect();
       });
-      await (r.dbList() as any)
-        .contains(this.db)
-        .do(exist => {
-          return r.branch(
-            exist,
-            r.expr(null),
-            r.dbCreate(this.db) as any
-          )
-        })
-        .run(this._conn);
-      await (r.db(this.db).tableList() as any)
-        .contains(this.userTableName)
-        .do(exist => {
-          return r.branch(
-            exist,
-            r.expr(null),
-            r.db(this.db).tableCreate(this.userTableName, { primary_key: 'username' }) as any
-          )
-        })
-        .run(this._conn);
+      await ensureDB(this.db, this._conn);
+      await ensureTable(this.db, this.userTableName, this._conn, { primary_key: 'username' });
       return this._conn;
     } catch (error) {
       console.error(error);
