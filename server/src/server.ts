@@ -8,6 +8,7 @@ import Auth from './auth';
 import Collection from './collection';
 import ReqlConnection from './reql_connection';
 import { invariant, parseRules } from './utils/utils';
+import { ensureTable } from './utils/rethinkdbExtra';
 import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 import config from './config';
 
@@ -28,7 +29,7 @@ export interface IRule {
   fetch: Function
 }
 
-export class Server {
+export default class Server {
   path: string;
   requestHandlers: Map<string, Function>;
   auth: Auth;
@@ -41,55 +42,65 @@ export class Server {
   requests: Map<number, Request>;
   rules: { [key: string]: IRule }
 
-  constructor(http_server, user_opts) {
+  constructor(httpServer, user_opts) {
     this.opts = Object.assign({}, user_opts, config);
     this.path = this.opts.path;
     this.requestHandlers = new Map();
-    this.httpServer = http_server;
+    this.httpServer = httpServer;
     this.wsServers = [];
     this.collections = new Map();
     this.requests = new Map();
     this.rules = parseRules(this.opts.rules);
 
+    this.dbConnection = new ReqlConnection(this.opts);
+    this.auth = new Auth(this, this.opts);
+  }
+
+  static async createServer(httpServer, opts) {
+    const server = new Server(httpServer, opts);
+    await server.connect();
+    return server;
+  }
+
+  async connect() {
     try {
+      const conn = await this.dbConnection.connect();
       for (const collection in this.rules) {
         this.collections.set(collection, new Collection(this.opts.projectName, collection, this));
       }
-      for (const key in endpoints) {
-        this.addRequestHandler(key, endpoints[key]);
-      }
-      this.dbConnection = new ReqlConnection(this.opts);
-
-      this.auth = new Auth(this, this.opts);
-      const ws_options = { path: this.path };
-
-      const add_websocket = server => {
-        const ws_server = new websocket.Server(Object.assign({ server }, ws_options))
-          .on('error', error => console.error(`Websocket server error: ${error}`))
-          .on('connection', socket => {
-            this.socket = socket;
-            this.socket.on('error', (code, msg) => {
-              console.log(`Received error from client: ${msg} (${code})`)
-            })
-            this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
-          });
-        this.wsServers.push(ws_server);
-      };
-      const add_http_listener = server => {
-        const extant_listeners = server.listeners('request').slice(0);
-        server.on('request', (req, res) => {
-          const req_path = url.parse(req.url).pathname;
-        })
-      };
-      if (http_server) {
-        add_websocket(http_server);
-        add_http_listener(http_server);
-      }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+    }
+    for (const key in endpoints) {
+      this.addRequestHandler(key, endpoints[key]);
+    }
+    if (this.httpServer) {
+      this.addHttpListener();
+      this.addWebsocket();
     }
   }
-  
+
+  addHttpListener() {
+    const extant_listeners = this.httpServer.listeners('request').slice(0);
+    this.httpServer.on('request', (req, res) => {
+      const req_path = url.parse(req.url).pathname;
+    })
+  }
+
+  addWebsocket() {
+    const ws_options = { path: this.path };
+    const ws_server = new websocket.Server(Object.assign({ server: this.httpServer }, this.ws_options))
+      .on('error', error => console.error(`Websocket server error: ${error}`))
+      .on('connection', socket => {
+        this.socket = socket;
+        this.socket.on('error', (code, msg) => {
+          console.log(`Received error from client: ${msg} (${code})`)
+        })
+        this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
+      });
+    this.wsServers.push(ws_server);
+  }
+
   getRequestHandler(request): Function {
     return this.requestHandlers.get(request.type) as Function;
   }

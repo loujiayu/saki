@@ -3,13 +3,8 @@ const fs = require('fs');
 const url = require('url');
 const path = require('path');
 
-const {Server: SakiServer} = require('../server/lib/Saki');
+const SakiServer = require('../server/lib/saki');
 const db = require('./db');
-
-// process.on('uncaughtException', (err) => {
-//   console.log(err);
-//   console.log(err.stack);
-// })
 
 const server = http.createServer((req, res) => {
   const html = fs.readFileSync('./index.html', 'utf8');
@@ -30,11 +25,7 @@ const server = http.createServer((req, res) => {
   res.end(content);
 }).listen(8100);
 
-server.on('error', error => {
-  console.log(error);
-})
-
-const Saki = new SakiServer(server, {
+const Saki = SakiServer.createServer(server, {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,

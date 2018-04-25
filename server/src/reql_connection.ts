@@ -21,7 +21,6 @@ export default class ReqlConnection {
       db: projectName,
     };
     this.db = projectName;
-    this.readyPromise = this.connect();
     this.userTableName = 'users';
   }
 
@@ -49,11 +48,14 @@ export default class ReqlConnection {
       return this._conn;
     } catch (error) {
       console.error(error);
+      this.reconnect();
     }
   }
 
   close() {
-    this.readyPromise.then(conn => conn.close());
+    if (this._conn) {
+      this._conn.close();
+    }
   }
 
   connection() {

@@ -1,1 +1,3 @@
-export { Server } from './server';
+const SakiServer = require('./server');
+
+module.exports = SakiServer.default ? SakiServer.default : SakiServer;

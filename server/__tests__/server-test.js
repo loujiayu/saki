@@ -2,7 +2,7 @@ const http = require('http');
 const path = require('path');
 const r = require('rethinkdb');
 const root = path.resolve(__dirname, '../..');
-const SakiServer = require(path.resolve(root, 'server/lib/Saki')).Server;
+const SakiServer = require(path.resolve(root, 'server/lib/Saki'));
 
 const db = {
   name: 'newa',
@@ -11,19 +11,19 @@ const db = {
 };
 let conn;
 
-const server = new SakiServer(http.createServer().listen(8000), {
-  projectName: db.name,
-  rdbPort: db.port,
-  rdbHost: db.host,
-  rules: ['test']
-});
-
+let server;
 const rethinkTestTable = r.table('test');
 
 beforeAll(() => {
-  return server.dbConnection.readyPromise.then(cn => {
-    conn = cn;
-    rethinkTestTable.delete().run(conn);
+  return SakiServer.createServer(http.createServer().listen(8000), {
+    projectName: db.name,
+    rdbPort: db.port,
+    rdbHost: db.host,
+    rules: ['test']
+  }).then(s => {
+    server = s;
+    conn = s.dbConnection.connection();
+    return rethinkTestTable.delete().run(conn);
   }).catch(e => console.log('connecting error occur', e));
 });
 
@@ -48,7 +48,7 @@ describe('invalid server request', () => {
     server.__proto__.sendError = mockSendError;
   });
 
-  test('rule ', () => {
+  test('rule', () => {
     expect(server.validate('update', 'test', mockRequest)).toBe(true);
   });
 
