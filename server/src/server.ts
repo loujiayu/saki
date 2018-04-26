@@ -125,24 +125,21 @@ export default class Server {
   }
   validate(operation: string, collection: string, rawRequest: IRequest): boolean {
     const rule = this.rules[collection];
+    if (!rule) return false;
     if (!rawRequest.internal || !rawRequest.options) return false;
 
     const { internal: { user }, options: { selector, data } } = rawRequest;
     switch (operation) {
       case 'update':
       case 'upsert':
-        if (!rule.update) return false;
         return rule.update(user, selector, data);
       case 'insert':
       case 'replace':
-        if (!rule.insert) return false;
         return rule.insert(user, data);
       case 'query':
       case 'watch':
-        if (!rule.fetch) return false;
         return rule.fetch(user, selector);
       case 'remove':
-        if (!rule.remove) return false;
         return rule.remove(user, selector);
       default:
         return false;
@@ -204,6 +201,7 @@ export default class Server {
     }
     const collection = rawRequest.options.collection;
     if (!this.validate(endpoint.name, collection, rawRequest)) {
+      this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
       return Promise.resolve();
     }
     const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
