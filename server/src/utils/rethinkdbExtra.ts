@@ -13,7 +13,7 @@ export async function ensureDB(db, conn) {
     .run(conn);
 }
 
-export async function ensureTable(db, table, conn, options?: Object) {
+export async function ensureTable(db, table, conn, options: Object = {}) {
   await (r.db(db).tableList() as any)
     .contains(table)
     .do(exist => {
