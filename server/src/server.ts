@@ -67,6 +67,7 @@ export default class Server {
       const conn = await this.dbConnection.connect();
       for (const collection in this.rules) {
         this.collections.set(collection, new Collection(this.opts.projectName, collection, this));
+        await ensureTable(this.dbConnection.db, collection, conn);
       }
     } catch (error) {
       console.error(error);
