@@ -6,7 +6,7 @@
   "author": "Jan Lou",
   "scripts": {
     "dev": "rollup -w -c build/config.js --environment TARGET:web-dev",
-    "test": "jest"
+    "test": "jest --config ./scripts/jest/config.js"
   },
   "keywords": [
     "rxjs",

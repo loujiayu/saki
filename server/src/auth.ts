@@ -1,7 +1,7 @@
 import * as bluebird from 'bluebird';
 import * as jsonwebtoken from 'jsonwebtoken';
 import * as r from 'rethinkdb';
-import { Server } from './server';
+import Server from './server';
 import { hashPassword, verifyPassword} from './utils/password';
 
 const jwt: any = bluebird.promisifyAll(jsonwebtoken);

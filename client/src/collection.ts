@@ -20,7 +20,9 @@ function errorHandle(name: string, req: Object): Observable<any> {
           subscriber.next(resp);
         }
       },
-      err => subscriber.error(err),
+      err => {
+        subscriber.error(err);
+      },
       () => subscriber.complete()
     );
   });

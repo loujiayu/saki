@@ -121,9 +121,9 @@ export class SakiSocket<T> extends Subject<T> {
         internal: {user: this.account.get(Saki_USER)}
       }))
       .concatMap((resp: Response) => {
-        // if (resp.error) {
-        //   throw new Error(resp.error);
-        // }
+        if (resp.error) {
+          throw new Error(resp.error);
+        }
         const data = resp.data || [];
         if (resp.state) {
           data.push({
@@ -149,7 +149,9 @@ export class SakiSocket<T> extends Subject<T> {
           (resp: Response) => {
             observer.next(resp);
           },
-          err => observer.error(err)
+          err => {
+            observer.error(err);
+          }
         );
       return () => {
         this.send({requestId: request.requestId, type: 'unsubscribe'});

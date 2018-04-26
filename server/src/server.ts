@@ -149,6 +149,7 @@ export default class Server {
     this.rules = rules;
   }
   handleHandshake(data) {
+    console.log(data);
     const request: IRequest = this.parseRequest(data);
     this.auth.handshake(request).then(res => {
       let info;
@@ -177,16 +178,17 @@ export default class Server {
   }
 
   sendError(requestId: number, error: string) {
-    this.sendResponse(requestId, { data: [{ error }] })
+    this.sendResponse(requestId, { error })
   }
 
   handleRequest(data): Promise<any> {
+    console.log(data);
     const rawRequest: IRequest = this.parseRequest(data);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
       return Promise.resolve();
     } else if (rawRequest.type === 'keepalive') {
-      this.sendResponse(rawRequest.requestId, { type: 'keepalive', status: 'complete' });
+      this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
       return Promise.resolve();
     }
     if (!rawRequest.internal || !rawRequest.options) {

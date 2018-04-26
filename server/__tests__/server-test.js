@@ -368,3 +368,23 @@ describe('replace', () => {
     });
   });
 });
+
+describe('validate err', () => {
+  let testTableName = 'unvalidTable';
+  let mockSendError;
+  beforeEach(() => {
+    mockSendError = jest.fn((id, error) => { });
+    server.__proto__.sendError = mockSendError;
+  });
+  test('validate', done => {
+    server.handleRequest({
+      type: 'query',
+      internal: {user: null},
+      options: {collection: testTableName}
+    }).then(() => {
+      expect(mockSendError).toHaveBeenCalledTimes(1);
+      done();
+    });
+  });
+});
+
