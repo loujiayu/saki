@@ -23,10 +23,10 @@ const endpoints = {
 };
 
 export interface IRule {
-  update: Function
-  remove: Function
-  insert: Function
-  fetch: Function
+  update: Function;
+  remove: Function;
+  insert: Function;
+  fetch: Function;
 }
 
 export default class Server {
@@ -40,7 +40,7 @@ export default class Server {
   socket;
   collections: Map<string, Collection>;
   requests: Map<number, Request>;
-  rules: { [key: string]: IRule }
+  rules: { [key: string]: IRule };
 
   constructor(httpServer, user_opts) {
     this.opts = Object.assign({}, user_opts, config);
@@ -85,19 +85,19 @@ export default class Server {
     const extant_listeners = this.httpServer.listeners('request').slice(0);
     this.httpServer.on('request', (req, res) => {
       const req_path = url.parse(req.url).pathname;
-    })
+    });
   }
 
   addWebsocket() {
     const ws_options = { path: this.path };
-    const ws_server = new websocket.Server(Object.assign({ server: this.httpServer }, this.ws_options))
+    const ws_server = new websocket.Server(Object.assign({ server: this.httpServer }, ws_options))
       .on('error', error => console.error(`Websocket server error: ${error}`))
       .on('connection', socket => {
         this.socket = socket;
         this.socket.on('error', (code, msg) => {
-          console.log(`Received error from client: ${msg} (${code})`)
-        })
-        this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)))
+          console.log(`Received error from client: ${msg} (${code})`);
+        });
+        this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)));
       });
     this.wsServers.push(ws_server);
   }
@@ -154,7 +154,7 @@ export default class Server {
       let info;
       if (res.error) {
         info = { method: request.method, error: res.error };
-        this.socket.once('message', msg => this.errorWrapSocket(() => this.handleHandshake(msg)))
+        this.socket.once('message', msg => this.errorWrapSocket(() => this.handleHandshake(msg)));
       } else {
         info = { token: res.token, user: res.user, method: request.method };
         this.socket.on('message', msg => {
@@ -177,7 +177,7 @@ export default class Server {
   }
 
   sendError(requestId: number, error: string) {
-    this.sendResponse(requestId, { error })
+    this.sendResponse(requestId, { error });
   }
 
   handleRequest(data): Promise<any> {
@@ -219,13 +219,13 @@ export default class Server {
 
   close() {
     this.wsServers.forEach(ws => {
-      ws.close()
-    })
+      ws.close();
+    });
 
     this.dbConnection.close();
 
     if (this.httpServer) {
-      this.httpServer.close()
+      this.httpServer.close();
     }
   }
 }

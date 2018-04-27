@@ -1,9 +1,13 @@
+import { IRule } from '../server';
+
 export function invariant(check: boolean, message: string) {
   if (!check)
       throw new Error(message);
 }
 
-export function parseRules(rules) {
+export function parseRules(
+  rules: { [key: string]: IRule } | Array<string>
+): { [key: string]: IRule } {
   invariant(
     !!rules,
     `rules must be defined, got: ${rules}`

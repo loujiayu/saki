@@ -1,4 +1,4 @@
-import { Server } from './server';
+import Server from './server';
 
 export interface IInternalRequest {
   user: string;
@@ -7,9 +7,9 @@ export interface IInternalRequest {
 export interface IRequest {
   type?: string;
   options?: IRequestData;
-  internal?: IInternalRequest,
-  requestId: number,
-  method?: string
+  internal?: IInternalRequest;
+  requestId: number;
+  method?: string;
 }
 
 export interface IRequestData {
@@ -61,7 +61,7 @@ export default class Request {
       );
       return this.dispose;
     } catch (e) {
-      this.server.sendError(this.id, e.message)
+      this.server.sendError(this.id, e.message);
     }
   }
 

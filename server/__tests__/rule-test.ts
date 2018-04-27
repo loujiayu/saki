@@ -29,5 +29,4 @@ describe('rules', () => {
     expect(rules.update()).not.toBeTruthy();
     expect(rules.remove()).toBeTruthy();
   });
-})
-
+});
