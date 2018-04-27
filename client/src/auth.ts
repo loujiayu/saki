@@ -2,7 +2,6 @@ import { root } from 'rxjs/util/root';
 import { Saki_JWT, Saki_USER } from './utils/utils';
 
 export class Storage {
-  constructor() {}
   setItem(user, token) {
     root.localStorage.setItem(Saki_USER, user);
     root.localStorage.setItem(Saki_JWT, token);

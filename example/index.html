@@ -9,23 +9,19 @@
     <script src="/client/dist/client.js"></script>
     <script>
       const sk = new Saki();
+      // sk.login({username: 'loujiayu', password: '7777'})
       sk.connect('unauthenticated');
-      sk.collection('projes').fetch().subscribe({
-        error: err => {
-          console.log(err);
-        },
-        next: val => {
-          console.log(val);
-        }
+      sk.collection('test').upsert('errorid', {name: 'ljy'}).subscribe({
+        next: val => console.log(val),
+        error: err => console.log(err)
       })
-      // sk.collection('projects').fetch().subscribe(
-      //   val => {
+      // sk.collection('projes').fetch().subscribe({
+      //   error: err => {
+      //     console.log(err);
+      //   },
+      //   next: val => {
       //     console.log(val);
       //   }
-      // )
-      // const ss = sk.collection('test');
-      // ss.watch().subscribe(val => {
-      //   console.log(val);
       // })
     </script>
   </body>

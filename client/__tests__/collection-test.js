@@ -21,7 +21,6 @@ beforeAll(() => {
     rules: ['test']
   }).then(s => {
     server = s;
-    sk.connect('unauthenticated');
   });
 });
 
@@ -30,6 +29,9 @@ afterAll(() => {
 });
 
 describe('unauthenticated', () => {
+  beforeEach(() => {
+    sk.connect('unauthenticated');
+  });
   test('unauthenticated', done => {
     sk.wsSubject.handshake.subscribe({
       next: resp => {
@@ -38,9 +40,6 @@ describe('unauthenticated', () => {
       }
     });
   });
-});
-
-describe('server status', () => {
   test('server ready', done => {
     sk.isReady(status => {
       expect(status).toBe('ready');

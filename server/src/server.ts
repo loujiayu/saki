@@ -149,7 +149,6 @@ export default class Server {
     this.rules = rules;
   }
   handleHandshake(data) {
-    console.log(data);
     const request: IRequest = this.parseRequest(data);
     this.auth.handshake(request).then(res => {
       let info;
@@ -182,7 +181,6 @@ export default class Server {
   }
 
   handleRequest(data): Promise<any> {
-    console.log(data);
     const rawRequest: IRequest = this.parseRequest(data);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
