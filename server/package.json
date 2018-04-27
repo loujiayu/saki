@@ -4,7 +4,7 @@
   "main": "lib/saki.js",
   "license": "MIT",
   "scripts": {
-    "test": "jest"
+    "test": "jest --config ./scripts/jest/config.js"
   },
   "keywords": [
     "rethinkdb"
@@ -22,13 +22,16 @@
   "author": "Jan Lou",
   "devDependencies": {
     "@types/bluebird": "^3.5.17",
+    "@types/jest": "^22.2.3",
     "@types/jsonwebtoken": "^7.2.3",
     "@types/rethinkdb": "^2.3.7",
     "@types/ws": "^3.2.0",
     "eslint": "^4.9.0",
     "eslint-plugin-jest": "^21.5.0",
     "jest": "^22.0.4",
-    "tslint": "^5.8.0"
+    "ts-jest": "^22.4.4",
+    "tslint": "^5.8.0",
+    "typescript": "^2.8.3"
   },
   "dependencies": {
     "bluebird": "^3.5.1",

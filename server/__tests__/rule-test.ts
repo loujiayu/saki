@@ -1,10 +1,9 @@
-const path = require('path');
-const root = path.resolve(__dirname, '..');
-const { parseRules } = require(path.resolve(root, 'lib/utils/utils'));
+import * as path from 'path';
+import { parseRules } from '../src/utils/utils';
 
 describe('rules', () => {
   test('throws when argument is undefined', () => {
-    expect(() => parseRules()).toThrow();
+    expect(() => parseRules(undefined)).toThrow();
   });
   
   test('throws when argument is number', () => {

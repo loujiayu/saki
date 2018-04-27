@@ -3,13 +3,13 @@ const fs = require('fs');
 const url = require('url');
 const path = require('path');
 
-const SakiServer = require('../server/lib/saki');
+const SakiServer = require('../lib/saki');
 const db = require('./db');
 
 const server = http.createServer((req, res) => {
   const html = fs.readFileSync('./index.html', 'utf8');
-  const client = fs.readFileSync('../client/dist/client.js');
-  const sourcemap = fs.readFileSync('../client/dist/client.js.map');
+  const client = fs.readFileSync('../../client/dist/client.js');
+  const sourcemap = fs.readFileSync('../../client/dist/client.js.map');
 
   const parsedUrl = url.parse(req.url);
   let pathname = `.${parsedUrl.pathname}`;
@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.end(content);
 }).listen(8100);
 
-const Saki = SakiServer.createServer(server, {
+SakiServer.createServer(server, {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,

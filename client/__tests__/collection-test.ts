@@ -1,11 +1,12 @@
-const path = require('path');
-const http = require('http');
+import * as path from 'path';
+import * as http from 'http';
 
-global.WebSocket = require('ws');
+import Saki from '../src/index';
 
-const root = path.resolve(__dirname, '../..');
-const Saki = require(path.resolve(root, 'client/dist/client'));
-const SakiServer = require(path.resolve(root, 'server/lib/saki'));
+const SakiServer = require('../../server/src/saki');
+
+(global as any).WebSocket = require('ws');
+
 const db = {
   name: 'newa',
   port: 28015,
@@ -13,6 +14,7 @@ const db = {
 };
 let server;
 const sk = new Saki();
+
 beforeAll(() => {
   return SakiServer.createServer(http.createServer().listen(8000), {
     projectName: db.name,

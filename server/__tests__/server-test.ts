@@ -1,8 +1,8 @@
-const http = require('http');
-const path = require('path');
-const r = require('rethinkdb');
-const root = path.resolve(__dirname, '../..');
-const SakiServer = require(path.resolve(root, 'server/lib/Saki'));
+import * as http from 'http';
+import * as path from 'path';
+import * as r from 'rethinkdb';
+
+const SakiServer = require('../src/saki');
 
 const db = {
   name: 'newa',
@@ -33,6 +33,7 @@ afterAll(() => {
       server.close();
     });
 });
+
 
 describe('invalid server request', () => {
   const mockRequest = {
@@ -79,7 +80,7 @@ describe('insert', () => {
     server.__proto__.sendError = mockSendError;
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('insert one', done => {
     server.handleRequest({
@@ -140,7 +141,7 @@ describe('read', () => {
     }).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('find', done => {
     server.handleRequest({
@@ -205,7 +206,7 @@ describe('transformations', () => {
     }]).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('limit', done => {
     server.handleRequest({
@@ -234,7 +235,7 @@ describe('remove', () => {
     }).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('remove by id', done => {
     server.handleRequest({
@@ -273,7 +274,7 @@ describe('update', () => {
     }).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('update with id', done => {
     server.handleRequest({
@@ -316,7 +317,8 @@ describe('upsert', () => {
     }]).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get([testID, testID2]).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn)
+      .then(() => (rethinkTestTable.get(testID2) as any).delete())
   });
   test('upsert without id error', done => {
     server.handleRequest({
@@ -355,7 +357,7 @@ describe('replace', () => {
     }).run(conn);
   });
   afterEach(() => {
-    return rethinkTestTable.get(testID).delete().run(conn);
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('replace', done => {
     server.handleRequest({
