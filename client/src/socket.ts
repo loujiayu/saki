@@ -57,7 +57,7 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   connect() {
-    this.sendHandshake();
+    return this.sendHandshake();
   }
 
   serializer(data: any): string {
@@ -96,7 +96,7 @@ export class SakiSocket<T> extends Subject<T> {
         .subscribe({
           next: m => {
             if (m.error) {
-              this.handshake.next(m);
+              this.handshake.error(m.error);
             } else {
               this.status.next(STATUS_READY);
               this.handshake.next(m);

@@ -57,7 +57,7 @@ export default class Auth {
             } else {
               return { error: 'Authentication failed. Wrong password.'};
             }
-          })
+          });
       case 'token':
         return this._jwt.verify(request.token);
       case 'signup':
@@ -68,7 +68,7 @@ export default class Auth {
           .run(this.server.dbConnection.connection())
           .then(({ first_error }) => {
             if (first_error) {
-              return { error: first_error }
+              return { error: first_error };
             } else {
               return { ...this._jwt.sign({id: row.password}), user: row.username };
             }

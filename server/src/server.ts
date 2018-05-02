@@ -150,6 +150,8 @@ export default class Server {
   }
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
+    if (request.type === 'unsubscribe') return;
+    
     this.auth.handshake(request).then(res => {
       let info;
       if (res.error) {

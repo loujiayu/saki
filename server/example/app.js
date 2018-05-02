@@ -29,18 +29,5 @@ SakiServer.createServer(server, {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,
-  rules: {
-    'test': {
-      update: () => true,
-      insert: () => true,
-      remove: () => true,
-      fetch: () => true
-    },
-    "projects": {
-      update: () => true,
-      insert: () => true,
-      remove: () => true,
-      fetch: () => true
-    }
-  }
+  rules: ['test', 'projects']
 });

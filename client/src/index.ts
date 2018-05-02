@@ -1,4 +1,4 @@
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, Subject } from 'rxjs';
 
 import { Collection } from './collection';
 import { Account } from './auth';
@@ -33,21 +33,22 @@ export default class Saki {
       next: resp => {
         if (resp.token && resp.user) {
           this.account.set(resp.user, resp.token);
-        } else if (resp.error) {
-          this.logout();
         }
+      },
+      error: () => {
+        this.logout();
       }
     });
   }
  
-  connect(authType) {
+  connect(authType): Subject<any> {
     this.account.setUp(authType);
-    this.wsSubject.connect();
+    return this.wsSubject.connect();
   }
 
-  login(userInfo) {
+  login(userInfo): Subject<any> {
     this.account.setUp('login', userInfo);
-    this.wsSubject.connect();
+    return this.wsSubject.connect();
   }
 
   logout() {

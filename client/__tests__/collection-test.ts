@@ -49,3 +49,14 @@ describe('unauthenticated', () => {
     });
   });
 });
+
+describe('login', () => {
+  test('login with wrong id', done => {
+    sk.login({username: 'name', password: 'wrong'}).subscribe({
+      error: error => {
+        expect(error).toBe('Authentication failed. User not found.');
+        done();
+      }
+    });
+  });
+});
