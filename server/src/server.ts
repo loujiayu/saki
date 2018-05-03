@@ -97,9 +97,15 @@ export default class Server {
         this.socket.on('error', (code, msg) => {
           console.log(`Received error from client: ${msg} (${code})`);
         });
-        this.socket.once('message', data => this.errorWrapSocket(() => this.handleHandshake(data)));
+        this.createHandshakeHandler();
       });
     this.wsServers.push(ws_server);
+  }
+  createHandshakeHandler() {
+    this.socket.once(
+      'message',
+      data => this.errorWrapSocket(() => this.handleHandshake(data))
+    );
   }
 
   getRequestHandler(request): Function {
@@ -151,12 +157,12 @@ export default class Server {
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
     if (request.type === 'unsubscribe') return;
-    
+
     this.auth.handshake(request).then(res => {
       let info;
       if (res.error) {
         info = { method: request.method, error: res.error };
-        this.socket.once('message', msg => this.errorWrapSocket(() => this.handleHandshake(msg)));
+        this.createHandshakeHandler();
       } else {
         info = { token: res.token, user: res.user, method: request.method };
         this.socket.on('message', msg => {
@@ -182,29 +188,32 @@ export default class Server {
     this.sendResponse(requestId, { error });
   }
 
-  handleRequest(data): Promise<any> {
+  handleRequest(data) {
     const rawRequest: IRequest = this.parseRequest(data);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
-      return Promise.resolve();
+      return;
     } else if (rawRequest.type === 'keepalive') {
       this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
-      return Promise.resolve();
+      return;
+    } else if (rawRequest.type === 'logout') {
+      this.createHandshakeHandler();
+      return;
     }
     if (!rawRequest.internal || !rawRequest.options) {
       this.sendError(rawRequest.requestId, 'unvalid request');
-      return Promise.resolve();
+      return;
     }
 
     const endpoint = this.getRequestHandler(rawRequest);
     if (!endpoint) {
       this.sendError(rawRequest.requestId, 'unknown endpoint');
-      return Promise.resolve();
+      return;
     }
     const collection = rawRequest.options.collection;
     if (!this.validate(endpoint.name, collection, rawRequest)) {
       this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
-      return Promise.resolve();
+      return;
     }
     const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
     this.requests.set(rawRequest.requestId, request);

@@ -22,7 +22,7 @@ export class Account {
   storage: Storage;
   authType: string;
   userInfo: Object;
-  
+
   constructor() {
     this.storage = new Storage();
   }
@@ -56,10 +56,12 @@ export class Account {
       return { method: this.authType };
     } else if (this.authType === 'login') {
       return { method: this.authType, userInfo: this.userInfo };
+    } else if (this.authType) {
+      return { method: this.authType };
     } else if (this.authType === 'token') {
       const token = this.get(Saki_JWT);
       if (typeof token === 'string') {
-        return { method: this.authType, token};
+        return { method: this.authType, token };
       } else {
         throw new Error('invalid token');
       }

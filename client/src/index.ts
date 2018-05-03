@@ -6,9 +6,9 @@ import { SakiSocket } from './socket';
 import { Saki_JWT, Saki_USER } from './utils/utils';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
-`${window.location.host}` || 'localhost:8000';
+  `${window.location.host}` || 'localhost:8000';
 const defaultSecure = typeof window !== 'undefined' && window.location &&
-window.location.protocol === 'https:' || false;
+  window.location.protocol === 'https:' || false;
 
 export default class Saki {
   wsSubject: SakiSocket<any>;
@@ -40,23 +40,25 @@ export default class Saki {
       }
     });
   }
- 
+
   connect(authType): Subject<any> {
     this.account.setUp(authType);
-    return this.wsSubject.connect();
+    return this.wsSubject.sendHandshake();
   }
 
   login(userInfo): Subject<any> {
     this.account.setUp('login', userInfo);
-    return this.wsSubject.connect();
+    return this.wsSubject.sendHandshake();
   }
 
   logout() {
     this.account.clear();
+    this.account.setUp('logout');
     if (this.wsSubject.handshakeSub) {
       this.wsSubject.handshakeSub.unsubscribe();
       this.wsSubject.handshakeSub = null;
     }
+    return this.wsSubject.removeHandshake();
   }
 
   signup(userInfo) {

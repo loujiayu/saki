@@ -56,10 +56,6 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket = new WebSocketSubject(this.wsSubjectConfig);
   }
 
-  connect() {
-    return this.sendHandshake();
-  }
-
   serializer(data: any): string {
     return JSON.stringify(data);
   }
@@ -110,6 +106,12 @@ export class SakiSocket<T> extends Subject<T> {
       this.handshakeSub.add(this.keepalive.connect()); 
     }
     return this.handshake;
+  }
+
+  removeHandshake() {
+    return this.sendHandshake()
+      .ignoreElements()
+      .concat(this.requestObservable({type: 'logout'}));
   }
 
   sendRequest(type, options): Observable<any> {
