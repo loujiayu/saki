@@ -70,22 +70,6 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket.next(this.serializer(data));
   }
 
-  handshakeWithPassword(data) {
-    if (this.handshakeSub) {
-      this.handshakeSub = this.requestObservable(data)
-        .subscribe({
-          next: m => {
-            if (m.error) {
-              this.handshake.next(m.error);
-            } else {
-              this.handshake.next(m);
-              this.handshake.complete();
-            }
-          }
-        });
-    }
-  }
-
   sendHandshake(): Subject<any> {
     if (!this.handshakeSub) {
       this.handshakeSub = this.requestObservable(this._handshakeMaker())
@@ -109,9 +93,11 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   removeHandshake() {
-    return this.sendHandshake()
-      .ignoreElements()
-      .concat(this.requestObservable({type: 'logout'}));
+    if (this.handshakeSub) {
+      return this.requestObservable({type: 'logout'});
+    } else {
+      return null;
+    }
   }
 
   sendRequest(type, options): Observable<any> {
@@ -156,7 +142,9 @@ export class SakiSocket<T> extends Subject<T> {
           }
         );
       return () => {
-        this.send({requestId: request.requestId, type: 'unsubscribe'});
+        if (request.type !== 'logout') {
+          this.send({requestId: request.requestId, type: 'unsubscribe'});
+        }
         subscription.unsubscribe();
       };
     });

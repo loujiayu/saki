@@ -64,7 +64,7 @@ export default class Auth {
         const row = request.userInfo;
         row.password = hashPassword(row.password);
         return r.table(this.server.dbConnection.userTableName)
-          .insert(row, { conflict: 'error' })
+          .insert({...row, id: row.username}, { conflict: 'error' })
           .run(this.server.dbConnection.connection())
           .then(({ first_error }) => {
             if (first_error) {

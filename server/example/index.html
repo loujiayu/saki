@@ -9,16 +9,24 @@
     <script src="/client/dist/client.js"></script>
     <script>
       const sk = new Saki();
-      // sk.login({username: 'loujiayu', password: '7777'}).subscribe({
-      //   error: error => {
-      //     console.log('error:', error)
+      sk.connect('unauthenticated')
+      sk.logout().subscribe(resp => {
+        console.log(resp);
+      })
+      // sk.collection('test').upsert('sss', {name: 'ljy'}).subscribe({
+      //   error: err => {
+      //     console.log(err);
       //   }
       // })
-      sk.connect('unauthenticated');
-      // sk.collection('test').upsert('errorid', {name: 'ljy'}).subscribe({
-      //   next: val => console.log(val),
-      //   error: err => console.log(err)
+      // const source = sk.connect('unauthenticated')
+      //                 .concat(sk.logout())
+      //                 .share()
+      // source.subscribe(resp => {
+      //   console.log(resp);
       // })
+      // sk.logout()
+
+      // sk.collection('test').upsert('errorid', {name: 'ljy'})
       // sk.collection('projes').fetch().subscribe({
       //   error: err => {
       //     console.log(err);

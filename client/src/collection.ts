@@ -9,7 +9,7 @@ export interface IQuery {
   limit?: number;
 }
 
-function errorHandle(name: string, req: Object): Observable<any> {
+export function errorHandle(name: string, req: Object): Observable<any> {
   const observable = this.sendRequest(name, req);
   const handler = Observable.create(subscriber => {
     observable.subscribe(

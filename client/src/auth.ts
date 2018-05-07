@@ -56,8 +56,8 @@ export class Account {
       return { method: this.authType };
     } else if (this.authType === 'login') {
       return { method: this.authType, userInfo: this.userInfo };
-    } else if (this.authType) {
-      return { method: this.authType };
+    } else if (this.authType === 'signup') {
+      return { method: this.authType, userInfo: this.userInfo };
     } else if (this.authType === 'token') {
       const token = this.get(Saki_JWT);
       if (typeof token === 'string') {

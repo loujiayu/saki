@@ -30,33 +30,40 @@ afterAll(() => {
   server.close();
 });
 
-describe('unauthenticated', () => {
-  beforeEach(() => {
-    sk.connect('unauthenticated');
-  });
-  test('unauthenticated', done => {
-    sk.wsSubject.handshake.subscribe({
-      next: resp => {
-        expect(resp).toEqual({method: 'unauthenticated', requestId: 0});
-        done();
-      }
-    });
-  });
-  test('server ready', done => {
-    sk.isReady(status => {
-      expect(status).toBe('ready');
+describe('auth', () => {
+  afterEach(done => {
+    sk.logout().subscribe(() => {
       done();
     });
   });
+  test('unauthenticated', done => {
+    sk.connect('unauthenticated').subscribe(resp => {
+      expect(resp).toEqual({method: 'unauthenticated', requestId: 0});
+      done();
+    });
+    // sk.wsSubject.handshake.subscribe({
+    //   next: resp => {
+        
+    //   }
+    // });
+  });
+  // test('server ready', done => {
+  //   sk.connect('unauthenticated');
+  //   sk.isReady(status => {
+  //     expect(status).toBe('ready');
+  //     done();
+  //   });
+  // });
+  // test('sign up', done => {
+  //   sk.signup({username: 'name', password: 'password'}).subscribe({
+  //     next: val => {
+  //       expect(val).toMatchObject({
+  //         token: true,
+  //         user: true
+  //       });
+  //       done();
+  //     }
+  //   });
+  // });
 });
 
-describe('login', () => {
-  test('login with wrong id', done => {
-    sk.login({username: 'name', password: 'wrong'}).subscribe({
-      error: error => {
-        expect(error).toBe('Authentication failed. User not found.');
-        done();
-      }
-    });
-  });
-});

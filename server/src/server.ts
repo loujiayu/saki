@@ -54,6 +54,8 @@ export default class Server {
 
     this.dbConnection = new ReqlConnection(this.opts);
     this.auth = new Auth(this, this.opts);
+
+    this.handleRequestWrapper = this.handleRequestWrapper.bind(this);
   }
 
   static async createServer(httpServer, opts) {
@@ -102,6 +104,8 @@ export default class Server {
     this.wsServers.push(ws_server);
   }
   createHandshakeHandler() {
+    this.socket.removeListener('message', this.handleRequestWrapper);
+
     this.socket.once(
       'message',
       data => this.errorWrapSocket(() => this.handleHandshake(data))
@@ -154,9 +158,11 @@ export default class Server {
   changeRules(rules) {
     this.rules = rules;
   }
+  handleRequestWrapper(msg) {
+    this.errorWrapSocket(() => this.handleRequest(msg));
+  }
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
-    if (request.type === 'unsubscribe') return;
 
     this.auth.handshake(request).then(res => {
       let info;
@@ -165,9 +171,7 @@ export default class Server {
         this.createHandshakeHandler();
       } else {
         info = { token: res.token, user: res.user, method: request.method };
-        this.socket.on('message', msg => {
-          this.errorWrapSocket(() => this.handleRequest(msg));
-        });
+        this.socket.on('message', this.handleRequestWrapper);
       }
       this.sendResponse(request.requestId, info);
     }).catch((err: JsonWebTokenError) => {
@@ -198,6 +202,8 @@ export default class Server {
       return;
     } else if (rawRequest.type === 'logout') {
       this.createHandshakeHandler();
+      this.removeRequest(rawRequest.requestId);
+      this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
       return;
     }
     if (!rawRequest.internal || !rawRequest.options) {

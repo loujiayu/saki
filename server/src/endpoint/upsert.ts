@@ -16,7 +16,7 @@ export async function upsert({collection, selector, data}, collections, send, er
         doc.eq(null),
         r.expr(data),
         doc.merge(data)
-      )
+      );
     }).run(conn);
 
     const {first_error, ...other} = result;

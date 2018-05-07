@@ -4,6 +4,7 @@ import { Collection } from './collection';
 import { Account } from './auth';
 import { SakiSocket } from './socket';
 import { Saki_JWT, Saki_USER } from './utils/utils';
+import { errorHandle } from './collection';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
   `${window.location.host}` || 'localhost:8000';
@@ -52,17 +53,12 @@ export default class Saki {
   }
 
   logout() {
-    this.account.clear();
-    this.account.setUp('logout');
-    if (this.wsSubject.handshakeSub) {
-      this.wsSubject.handshakeSub.unsubscribe();
-      this.wsSubject.handshakeSub = null;
-    }
-    return this.wsSubject.removeHandshake();
+    return errorHandle.call(this.wsSubject, 'logout', {});
   }
 
   signup(userInfo) {
-    return this.wsSubject.handshakeWithPassword({ method: 'signup', userInfo: userInfo });
+    this.account.setUp('signup', userInfo);
+    return this.wsSubject.sendHandshake();
   }
 
   isReady(cb: (value: any) => void): Subscription {
