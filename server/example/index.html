@@ -10,12 +10,20 @@
     <script>
       const sk = new Saki();
       sk.connect('unauthenticated')
-      sk.logout().subscribe(resp => {
-        console.log(resp);
+      sk.logout().subscribe({
+        complete: () => {
+          console.log('object');
+        }
       })
-      // sk.collection('test').upsert('sss', {name: 'ljy'}).subscribe({
+      // sk.collection('test').insert({name: 'ljy'}).subscribe({
       //   error: err => {
       //     console.log(err);
+      //   },
+      //   next: resp => {
+      //     console.log(resp);
+      //   },
+      //   complete: ss => {
+      //     console.log(ss);
       //   }
       // })
       // const source = sk.connect('unauthenticated')

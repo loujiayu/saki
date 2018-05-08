@@ -163,7 +163,6 @@ export default class Server {
   }
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
-
     this.auth.handshake(request).then(res => {
       let info;
       if (res.error) {
@@ -176,6 +175,7 @@ export default class Server {
       this.sendResponse(request.requestId, info);
     }).catch((err: JsonWebTokenError) => {
       this.sendResponse(request.requestId, { error: err.message });
+      this.createHandshakeHandler();
     });
   }
 

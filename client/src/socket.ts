@@ -35,10 +35,7 @@ export class SakiSocket<T> extends Subject<T> {
       url,
       closeObserver: {
         next: () => {
-          if (this.handshakeSub) {
-            this.handshakeSub.unsubscribe();
-            this.handshakeSub = null;
-          }
+          this.removeHandshake();
         }
       }
     };
@@ -66,6 +63,13 @@ export class SakiSocket<T> extends Subject<T> {
     });
   }
 
+  removeHandshake() {
+    if (this.handshakeSub) {
+      this.handshakeSub.unsubscribe();
+      this.handshakeSub = null;
+    }
+  }
+
   send(data: any): void {
     this.socket.next(this.serializer(data));
   }
@@ -90,14 +94,6 @@ export class SakiSocket<T> extends Subject<T> {
       this.handshakeSub.add(this.keepalive.connect()); 
     }
     return this.handshake;
-  }
-
-  removeHandshake() {
-    if (this.handshakeSub) {
-      return this.requestObservable({type: 'logout'});
-    } else {
-      return null;
-    }
   }
 
   sendRequest(type, options): Observable<any> {

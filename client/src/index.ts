@@ -53,7 +53,13 @@ export default class Saki {
   }
 
   logout() {
-    return errorHandle.call(this.wsSubject, 'logout', {});
+    const handler = errorHandle.call(this.wsSubject, 'logout', {});
+    handler.subscribe({
+      complete: () => {
+        this.wsSubject.removeHandshake();
+      }
+    });
+    return handler;
   }
 
   signup(userInfo) {

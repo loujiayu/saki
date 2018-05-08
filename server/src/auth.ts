@@ -76,7 +76,7 @@ export default class Auth {
       case 'unauthenticated':
         return Promise.resolve({});
       default:
-        throw new Error(`Unknown handshake method "${request.method}"`);
+        return Promise.reject({message: `Unknown handshake method "${request.method}"`})
     }
   }
 }

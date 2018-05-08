@@ -23,7 +23,7 @@ export function errorHandle(name: string, req: Object): Observable<any> {
       err => {
         subscriber.error(err);
       },
-      () => subscriber.complete()
+      resp => subscriber.complete(resp)
     );
   });
   const sub = handler.subscribe({
