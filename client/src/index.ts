@@ -55,7 +55,12 @@ export default class Saki {
   logout() {
     const handler = errorHandle.call(this.wsSubject, 'logout', {});
     handler.subscribe({
+      error: () => {
+        this.wsSubject.removeHandshake();
+      },
       complete: () => {
+        console.log('complete');
+        this.account.clear();
         this.wsSubject.removeHandshake();
       }
     });

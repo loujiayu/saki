@@ -138,7 +138,7 @@ export class SakiSocket<T> extends Subject<T> {
           }
         );
       return () => {
-        if (request.type !== 'logout') {
+        if (request.type !== 'logout' && !request.method) {
           this.send({requestId: request.requestId, type: 'unsubscribe'});
         }
         subscription.unsubscribe();

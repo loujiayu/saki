@@ -1,4 +1,4 @@
-import { root } from 'rxjs/util/root';
+import root from './utils/root';
 import { Saki_JWT, Saki_USER } from './utils/utils';
 
 export class Storage {
@@ -21,7 +21,7 @@ export class Storage {
 export class Account {
   storage: Storage;
   authType: string;
-  userInfo: Object;
+  userInfo: Object | null;
 
   constructor() {
     this.storage = new Storage();
@@ -37,6 +37,8 @@ export class Account {
 
   clear() {
     this.storage.clear();
+    this.authType = 'null';
+    this.userInfo = null;
   }
 
   setUp(authType, userInfo?: Object) {
@@ -66,7 +68,7 @@ export class Account {
         throw new Error('invalid token');
       }
     } else {
-      throw new Error('auth failed');
+      return { method: this.authType };
     }
   }
 }
