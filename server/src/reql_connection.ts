@@ -21,7 +21,7 @@ export default class ReqlConnection {
       db: projectName,
     };
     this.db = projectName;
-    this.userTableName = 'users';
+    this.userTableName = 'sk_users';
   }
 
   reconnect() {

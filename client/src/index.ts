@@ -30,6 +30,10 @@ export default class Saki {
       this.account.handshake.bind(this.account),
       this.account
     );
+    this.handshake();
+  }
+
+  handshake() {
     this.wsSubject.handshake.subscribe({
       next: resp => {
         if (resp.token && resp.user) {
@@ -59,9 +63,11 @@ export default class Saki {
         this.wsSubject.removeHandshake();
       },
       complete: () => {
-        console.log('complete');
         this.account.clear();
         this.wsSubject.removeHandshake();
+        // reverse handshake for login again
+        this.wsSubject.handshake.isStopped = false;
+        this.handshake();
       }
     });
     return handler;
