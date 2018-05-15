@@ -163,7 +163,6 @@ export default class Server {
   }
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
-    console.log(data);
     this.auth.handshake(request).then(res => {
       let info;
       if (res.error) {

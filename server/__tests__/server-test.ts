@@ -378,15 +378,13 @@ describe('validate err', () => {
     mockSendError = jest.fn((id, error) => { });
     server.__proto__.sendError = mockSendError;
   });
-  test('validate', done => {
+  test('validate', () => {
     server.handleRequest({
       type: 'query',
       internal: {user: null},
       options: {collection: testTableName}
-    }).then(() => {
-      expect(mockSendError).toHaveBeenCalledTimes(1);
-      done();
     });
+    expect(mockSendError).toHaveBeenCalledTimes(1);
   });
 });
 
