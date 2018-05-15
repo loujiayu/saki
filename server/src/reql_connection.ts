@@ -1,5 +1,6 @@
 import * as r from 'rethinkdb';
 import { ensureDB, ensureTable } from './utils/rethinkdbExtra';
+import Server from './server';
 
 export default class ReqlConnection {
   rdbConfig;
@@ -10,7 +11,7 @@ export default class ReqlConnection {
   db: string;
   userTableName: string;
 
-  constructor({
+  constructor(private server: Server, {
     rdbHost = 'localhost',
     rdbPort = 28015,
     projectName
@@ -29,6 +30,9 @@ export default class ReqlConnection {
       this._conn.removeAllListeners();
       this._conn.close();
     }
+    
+    this.server.clients.forEach(client => client.close({error: 'Connection to the database was lost.'}));
+    
     this._conn = null;
     if (!this.reconnectTimer) {
       this.reconnectTimer = setTimeout(this.connect(), this.retryDelay);

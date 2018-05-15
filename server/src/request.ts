@@ -1,4 +1,4 @@
-import Server from './server';
+import Client from './client';
 
 export interface IInternalRequest {
   user: string;
@@ -30,7 +30,7 @@ export default class Request {
   constructor(
     private rawRequest: IRequest,
     private endpoint: Function,
-    private server: Server,
+    private client: Client,
     private id: number
   ) {
     this.handleInternalData();
@@ -54,14 +54,14 @@ export default class Request {
     try {
       this.dispose = await this.endpoint(
         this.rawRequest.options,
-        this.server.collections,
-        res => this.server.sendResponse(this.id, res),
-        (error: string) => this.server.sendError(this.id, error),
-        this.server.dbConnection
+        this.client.server.collections,
+        res => this.client.sendResponse(this.id, res),
+        (error: string) => this.client.sendError(this.id, error),
+        this.client.server.dbConnection
       );
       return this.dispose;
     } catch (e) {
-      this.server.sendError(this.id, e.message);
+      this.client.sendError(this.id, e.message);
     }
   }
 

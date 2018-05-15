@@ -1,10 +1,12 @@
 import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 import * as url from 'url';
+import * as http from 'http';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
 import Request, { IRequest } from './request';
 import Auth from './auth';
+import Client from './client';
 import Collection from './collection';
 import ReqlConnection from './reql_connection';
 import { invariant, parseRules } from './utils/utils';
@@ -35,12 +37,13 @@ export default class Server {
   auth: Auth;
   opts;
   dbConnection: ReqlConnection;
-  httpServer: any;
+  httpServer: http.Server;
   wsServers: any;
-  socket;
   collections: Map<string, Collection>;
   requests: Map<number, Request>;
   rules: { [key: string]: IRule };
+  wss: websocket.Server;
+  clients: Set<Client>;
 
   constructor(httpServer, user_opts) {
     this.opts = Object.assign({}, user_opts, config);
@@ -51,11 +54,9 @@ export default class Server {
     this.collections = new Map();
     this.requests = new Map();
     this.rules = parseRules(this.opts.rules);
-
-    this.dbConnection = new ReqlConnection(this.opts);
+    this.clients = new Set();
+    this.dbConnection = new ReqlConnection(this, this.opts);
     this.auth = new Auth(this, this.opts);
-
-    this.handleRequestWrapper = this.handleRequestWrapper.bind(this);
   }
 
   static async createServer(httpServer, opts) {
@@ -77,10 +78,8 @@ export default class Server {
     for (const key in endpoints) {
       this.addRequestHandler(key, endpoints[key]);
     }
-    if (this.httpServer) {
-      this.addHttpListener();
-      this.addWebsocket();
-    }
+    this.addHttpListener();
+    this.addWebsocket();
   }
 
   addHttpListener() {
@@ -91,158 +90,20 @@ export default class Server {
   }
 
   addWebsocket() {
-    const ws_options = { path: this.path };
-    const ws_server = new websocket.Server(Object.assign({ server: this.httpServer }, ws_options))
+    this.wss = new websocket.Server(Object.assign({ server: this.httpServer }, { path: this.path }))
       .on('error', error => console.error(`Websocket server error: ${error}`))
       .on('connection', socket => {
-        this.socket = socket;
-        this.socket.on('error', (code, msg) => {
-          console.log(`Received error from client: ${msg} (${code})`);
-        });
-        this.createHandshakeHandler();
+        this.clients.add(new Client(socket, this));
       });
-    this.wsServers.push(ws_server);
-  }
-  createHandshakeHandler() {
-    this.socket.removeListener('message', this.handleRequestWrapper);
-
-    this.socket.once(
-      'message',
-      data => this.errorWrapSocket(() => this.handleHandshake(data))
-    );
   }
 
-  getRequestHandler(request): Function {
-    return this.requestHandlers.get(request.type) as Function;
-  }
   addRequestHandler(request_name, endpoint) {
     this.requestHandlers.set(request_name, endpoint);
   }
 
-  errorWrapSocket(cb) {
-    try {
-      cb();
-    } catch (err) {
-      console.error(`Unhandled error in request: ${err.stack}`);
-    }
-  }
-  parseRequest(data: string): IRequest {
-    if (typeof data === 'string') {
-      return JSON.parse(data);
-    } else {
-      return data;
-    }
-  }
-  validate(operation: string, collection: string, rawRequest: IRequest): boolean {
-    const rule = this.rules[collection];
-    if (!rule) return false;
-    if (!rawRequest.internal || !rawRequest.options) return false;
-
-    const { internal: { user }, options: { selector, data } } = rawRequest;
-    switch (operation) {
-      case 'update':
-      case 'upsert':
-        return rule.update(user, selector, data);
-      case 'insert':
-      case 'replace':
-        return rule.insert(user, data);
-      case 'query':
-      case 'watch':
-        return rule.fetch(user, selector);
-      case 'remove':
-        return rule.remove(user, selector);
-      default:
-        return false;
-    }
-  }
-  changeRules(rules) {
-    this.rules = rules;
-  }
-  handleRequestWrapper(msg) {
-    this.errorWrapSocket(() => this.handleRequest(msg));
-  }
-  handleHandshake(data) {
-    const request: IRequest = this.parseRequest(data);
-    this.auth.handshake(request).then(res => {
-      let info;
-      if (res.error) {
-        info = { method: request.method, error: res.error };
-        this.createHandshakeHandler();
-      } else {
-        info = { token: res.token, user: res.user, method: request.method };
-        this.socket.on('message', this.handleRequestWrapper);
-      }
-      this.sendResponse(request.requestId, info);
-    }).catch((err: JsonWebTokenError) => {
-      this.sendResponse(request.requestId, { error: err.message });
-      this.createHandshakeHandler();
-    });
-  }
-
-  sendResponse(requestId, data) {
-    data.requestId = requestId;
-    try {
-      this.socket.send(JSON.stringify(data));
-    } catch (e) {
-      console.log(e, data);
-    }
-  }
-
-  sendError(requestId: number, error: string) {
-    this.sendResponse(requestId, { error });
-  }
-
-  handleRequest(data) {
-    const rawRequest: IRequest = this.parseRequest(data);
-    if (rawRequest.type === 'unsubscribe') {
-      this.removeRequest(rawRequest.requestId);
-      return;
-    } else if (rawRequest.type === 'keepalive') {
-      this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
-      return;
-    } else if (rawRequest.type === 'logout') {
-      this.createHandshakeHandler();
-      this.removeRequest(rawRequest.requestId);
-      this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
-      return;
-    }
-    if (!rawRequest.internal || !rawRequest.options) {
-      this.sendError(rawRequest.requestId, 'unvalid request');
-      return;
-    }
-
-    const endpoint = this.getRequestHandler(rawRequest);
-    if (!endpoint) {
-      this.sendError(rawRequest.requestId, 'unknown endpoint');
-      return;
-    }
-    const collection = rawRequest.options.collection;
-    if (!this.validate(endpoint.name, collection, rawRequest)) {
-      this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
-      return;
-    }
-    const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
-    this.requests.set(rawRequest.requestId, request);
-    return request.run();
-  }
-
-  removeRequest(id: number) {
-    const request = this.requests.get(id);
-    this.requests.delete(id);
-    if (request) {
-      request.close();
-    }
-  }
-
   close() {
-    this.wsServers.forEach(ws => {
-      ws.close();
-    });
-
+    this.wss.close();
     this.dbConnection.close();
-
-    if (this.httpServer) {
-      this.httpServer.close();
-    }
+    this.httpServer.close();
   }
 }

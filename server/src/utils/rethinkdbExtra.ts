@@ -8,7 +8,7 @@ export async function ensureDB(db, conn) {
         exist,
         r.expr(null),
         r.dbCreate(db) as any
-      )
+      );
     })
     .run(conn);
 }
@@ -21,7 +21,7 @@ export async function ensureTable(db, table, conn, options: Object = {}) {
         exist,
         r.expr(null),
         r.db(db).tableCreate(table, options) as any
-      )
+      );
     })
     .run(conn);
 }

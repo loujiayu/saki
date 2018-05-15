@@ -4,7 +4,7 @@ export async function insert({collection, data, options}, collections, send, err
   try {
     const conn = dbConnection.connection();
     const result: r.WriteResult =
-      await collections.get(collection).table.insert(data, options || {}).run(conn)
+      await collections.get(collection).table.insert(data, options || {}).run(conn);
   
     const {first_error, generated_keys, ...other} = result;
     const res: Object[] = [];
@@ -20,9 +20,9 @@ export async function insert({collection, data, options}, collections, send, err
     send({
       state: 'complete',
       data: res
-    })
+    });
   } catch (e) {
-    errorHandle(e.message)
+    errorHandle(e.message);
   }
   
 }

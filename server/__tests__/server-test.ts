@@ -1,7 +1,9 @@
 import * as http from 'http';
 import * as path from 'path';
 import * as r from 'rethinkdb';
+import * as websocket from 'ws';
 
+import Client from '../src/client';
 const SakiServer = require('../src/saki');
 
 const db = {
@@ -10,8 +12,8 @@ const db = {
   host: '127.0.0.1'
 };
 let conn;
-
 let server;
+let client;
 const rethinkTestTable = r.table('test');
 
 beforeAll(() => {
@@ -21,6 +23,7 @@ beforeAll(() => {
     rdbHost: db.host,
     rules: ['test']
   }).then(s => {
+    client = new Client(new websocket(null), s);
     server = s;
     conn = s.dbConnection.connection();
     return rethinkTestTable.delete().run(conn);
@@ -35,7 +38,7 @@ afterAll(() => {
 });
 
 
-describe('invalid server request', () => {
+describe('invalid client request', () => {
   const mockRequest = {
     internal: { user: 'john' },
     options: { selector: 'selector' }
@@ -45,26 +48,26 @@ describe('invalid server request', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
   });
 
   test('rule', () => {
-    expect(server.validate('update', 'test', mockRequest)).toBe(true);
+    expect(client.validate('update', 'test', mockRequest)).toBe(true);
   });
 
   test('handle request unsubscribe', () => {
-    server.handleRequest({ type: 'unsubscribe' });
+    client.handleRequest({ type: 'unsubscribe' });
     expect(mockSendResponse).toHaveBeenCalledTimes(0);
   });
 
   test('handle request unvalid request', () => {
-    server.handleRequest({ requestId: 0 });
+    client.handleRequest({ requestId: 0 });
     expect(mockSendError).toBeCalledWith(0, 'unvalid request');
   });
 
   test('handle request unknown endpoint', () => {
-    server.handleRequest(Object.assign({}, { requestId: 0, type: 'unknown' }, mockRequest));
+    client.handleRequest(Object.assign({}, { requestId: 0, type: 'unknown' }, mockRequest));
     expect(mockSendError).toBeCalledWith(0, 'unknown endpoint');
   });
 });
@@ -76,14 +79,14 @@ describe('insert', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
   });
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('insert one', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'insert',
       internal: { user: null },
       options: { collection: 'test', data: { id: testID, name: 'john' } }
@@ -93,12 +96,12 @@ describe('insert', () => {
     });
   });
   test('duplicate primary key', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'insert',
       internal: { user: null },
       options: { collection: 'test', data: { id: testID } }
     }).then(() => {
-      return server.handleRequest({
+      return client.handleRequest({
         type: 'insert',
         internal: { user: null },
         options: { collection: 'test', data: { id: testID } }
@@ -109,12 +112,12 @@ describe('insert', () => {
     });
   });
   test('insert optinos', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'insert',
       internal: { user: null },
       options: { collection: 'test', data: { id: testID, name: 'john' } }
     }).then(() => {
-      return server.handleRequest({
+      return client.handleRequest({
         type: 'insert',
         internal: { user: null },
         options: { collection: 'test', data: { id: testID, name: 'andi' }, options: { conflict: 'replace' } }
@@ -133,8 +136,8 @@ describe('read', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert({
       id: testID,
       name: 'john'
@@ -144,7 +147,7 @@ describe('read', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('find', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test', selector: testID }
@@ -154,7 +157,7 @@ describe('read', () => {
     });
   });
   test('find with filter', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test', selector: { name: 'john' } }
@@ -164,7 +167,7 @@ describe('read', () => {
     });
   });
   test('query with wrong id', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test', selector: 'wrong-id' }
@@ -174,7 +177,7 @@ describe('read', () => {
     });
   });
   test('query', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test' }
@@ -192,8 +195,8 @@ describe('transformations', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert([{
       name: 'john',
       age: 25
@@ -209,7 +212,7 @@ describe('transformations', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('limit', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test', limit: 2 }
@@ -227,8 +230,8 @@ describe('remove', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert({
       id: testID,
       name: 'john-remove'
@@ -238,7 +241,7 @@ describe('remove', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('remove by id', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'remove',
       internal: { user: null },
       options: { collection: 'test', selector: testID }
@@ -248,7 +251,7 @@ describe('remove', () => {
     });
   });
   test('remove by filter', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'remove',
       internal: { user: null },
       options: { collection: 'test', selector: { name: 'john-remove' } }
@@ -266,8 +269,8 @@ describe('update', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert({
       id: testID,
       class: { name: 'john', age: 27 }
@@ -277,7 +280,7 @@ describe('update', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('update with id', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'update',
       internal: { user: null },
       options: { collection: 'test', selector: testID, data: { class: { name: 'esan' } } }
@@ -287,7 +290,7 @@ describe('update', () => {
     });
   });
   test('update with filter', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'update',
       internal: { user: null },
       options: { collection: 'test', selector: { class: { name: 'john' } }, data: { class: { name: 'esan' } } }
@@ -306,8 +309,8 @@ describe('upsert', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert([{
       id: testID,
       name: 'john-update'
@@ -318,10 +321,10 @@ describe('upsert', () => {
   });
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn)
-      .then(() => (rethinkTestTable.get(testID2) as any).delete())
+      .then(() => (rethinkTestTable.get(testID2) as any).delete());
   });
   test('upsert without id error', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'upsert',
       internal: { user: null },
       options: { collection: 'test', selector: testID + 'errorid', data: { name: 'pappm' } }
@@ -331,7 +334,7 @@ describe('upsert', () => {
     });
   });
   test('update matching doc', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'upsert',
       internal: { user: null },
       options: { collection: 'test', selector: { name: 'john-update' }, data: { name: 'tom', age: 20 } }
@@ -349,8 +352,8 @@ describe('replace', () => {
   beforeEach(() => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendResponse = mockSendResponse;
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
     return rethinkTestTable.insert({
       id: testID,
       class: { name: 'john', age: 27 }
@@ -360,7 +363,7 @@ describe('replace', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('replace', done => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'replace',
       internal: { user: null },
       options: { collection: 'test', data: { id: testID, class: { name: 'bob' } } }
@@ -376,10 +379,10 @@ describe('validate err', () => {
   let mockSendError;
   beforeEach(() => {
     mockSendError = jest.fn((id, error) => { });
-    server.__proto__.sendError = mockSendError;
+    client.__proto__.sendError = mockSendError;
   });
   test('validate', () => {
-    server.handleRequest({
+    client.handleRequest({
       type: 'query',
       internal: {user: null},
       options: {collection: testTableName}
