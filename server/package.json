@@ -22,6 +22,7 @@
   "author": "Jan Lou",
   "devDependencies": {
     "@types/bluebird": "^3.5.17",
+    "@types/chalk": "^2.2.0",
     "@types/jest": "^22.2.3",
     "@types/jsonwebtoken": "^7.2.3",
     "@types/rethinkdb": "^2.3.7",
@@ -35,6 +36,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "chalk": "^2.4.1",
     "jsonwebtoken": "^8.1.0",
     "rethinkdb": "^2.3.3",
     "ws": "^5.1.1"
