@@ -1,6 +1,7 @@
 import * as r from 'rethinkdb';
 import { ensureDB, ensureTable } from './utils/rethinkdbExtra';
 import Server from './server';
+import logger from './logger';
 
 export default class ReqlConnection {
   rdbConfig;
@@ -44,14 +45,14 @@ export default class ReqlConnection {
     try {
       this._conn = await r.connect(this.rdbConfig);
       this._conn.on('error', error => {
-        console.error(`error in rethinkdb ${error}`);
+        logger.error(`error in rethinkdb ${error}`);
         this.reconnect();
       });
       await ensureDB(this.db, this._conn);
       await ensureTable(this.db, this.userTableName, this._conn, { primary_key: 'username' });
       return this._conn;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       this.reconnect();
     }
   }

@@ -2,20 +2,23 @@ import chalk from 'chalk';
 
 import emoji from './utils/emoji';
 
-class Logger {
+export class Logger {
   lines: number;
-  logLevel: number;
+  isDev: boolean;
+  
   constructor() {
     this.lines = 0;
     this.setOptions();
   }
 
   setOptions() {
-    this.logLevel = 3;
+    this.isDev = process.env.NODE_ENV === 'production';
   }
 
   write(message: string) {
-    console.log(message);
+    if (this.isDev) {
+      console.log(message);
+    }
   }
 
   log(message: string) {
@@ -30,3 +33,7 @@ class Logger {
     this.write(chalk.red(`${emoji.error}  ${err}`));
   }
 }
+
+const logger = new Logger();
+
+export default logger;

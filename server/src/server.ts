@@ -13,6 +13,7 @@ import { invariant, parseRules } from './utils/utils';
 import { ensureTable } from './utils/rethinkdbExtra';
 import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 import config from './config';
+import logger from './logger';
 
 const endpoints = {
   query,
@@ -73,7 +74,7 @@ export default class Server {
         await ensureTable(this.dbConnection.db, collection, conn);
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
     for (const key in endpoints) {
       this.addRequestHandler(key, endpoints[key]);
@@ -91,7 +92,7 @@ export default class Server {
 
   addWebsocket() {
     this.wss = new websocket.Server(Object.assign({ server: this.httpServer }, { path: this.path }))
-      .on('error', error => console.error(`Websocket server error: ${error}`))
+      .on('error', error => logger.error(`Websocket server error: ${error}`))
       .on('connection', socket => {
         this.clients.add(new Client(socket, this));
       });

@@ -4,6 +4,7 @@ import { JsonWebTokenError } from 'jsonwebtoken';
 import Server from './server';
 import Request, { IRequest } from './request';
 import Auth from './auth';
+import logger from './logger';
 
 export interface IRule {
   update: Function;
@@ -20,6 +21,7 @@ export default class Client {
   requests: Map<number, Request>;
 
   constructor(private socket: websocket, server) {
+    logger.log('Client connection established.');
     this.server = server;
     this.auth = server.auth;
     this.rules = server.rules;
@@ -28,12 +30,13 @@ export default class Client {
     this.requests = new Map();
     
     this.socket.on('close', () => {
+      logger.log('Client connection terminated.');
       this.requests.forEach(request => request.close());
       this.requests.clear();
       this.server.clients.delete(this);
     });
     this.socket.on('error', (code, msg) => {
-      console.log(`Received error from client: ${msg} (${code})`);
+      logger.error(`Received error from client: ${msg} (${code})`);
     });
 
     this.handleRequestWrapper = this.handleRequestWrapper.bind(this);
@@ -61,10 +64,11 @@ export default class Client {
     if (!this.isOpen()) return;
     
     data.requestId = requestId;
+    logger.log(`Sending response: ${JSON.stringify(data)}`);
     try {
       this.socket.send(JSON.stringify(data));
     } catch (e) {
-      console.log(e, data);
+      logger.error(e);
     }
   }
 
@@ -74,6 +78,7 @@ export default class Client {
 
   handleHandshake(data) {
     const request: IRequest = this.parseRequest(data);
+    logger.log(`Received handshake: ${JSON.stringify(request)}`);
     this.auth.handshake(request).then(res => {
       let info;
       if (res.error) {
@@ -102,7 +107,7 @@ export default class Client {
     try {
       cb();
     } catch (err) {
-      console.error(`Unhandled error in request: ${err.stack}`);
+      logger.error(`Unhandled error in request: ${err.stack}`);
     }
   }
 
@@ -131,6 +136,7 @@ export default class Client {
 
   handleRequest(data) {
     const rawRequest: IRequest = this.parseRequest(data);
+    logger.log(`Received request from client: ${data}`);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
       return;
@@ -177,6 +183,7 @@ export default class Client {
 
   close(info) {
     if (this.isOpen()) {
+      logger.log('Closing client connection with message:' + info);
       const closeMsg = (info.error && info.error.substr(0, 64)) || 'Unspecified reason.';
       this.socket.close(closeMsg);
     }
