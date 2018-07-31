@@ -17,6 +17,7 @@ let client;
 const rethinkTestTable = r.table('test');
 
 beforeAll(() => {
+  console.log('before all');
   return SakiServer.createServer(http.createServer().listen(8000), {
     projectName: db.name,
     rdbPort: db.port,

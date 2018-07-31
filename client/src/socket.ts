@@ -1,14 +1,17 @@
-import { WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/observable/dom/WebSocketSubject';
-import { BehaviorSubject, Observable, Subject, Observer, Subscription, ConnectableObservable } from 'rxjs';
+import { WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  Observer,
+  Subscription,
+  timer
+} from 'rxjs';
+
+import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter} from 'rxjs/operators';
+
 import { Account } from './auth';
 import { Saki_USER } from './utils/utils';
-
-import 'rxjs/add/operator/share';
-import 'rxjs/add/operator/concat';
-import 'rxjs/add/operator/ignoreElements';
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/takeWhile';
-import 'rxjs/add/operator/map';
 
 const STATUS_UNCONNECTED = 'unconnected';
 const STATUS_READY = 'ready';
@@ -21,13 +24,13 @@ interface Response {
 
 export class SakiSocket<T> extends Subject<T> {
   socket: WebSocketSubject<any>;
-  wsSubjectConfig: WebSocketSubjectConfig;
+  wsSubjectConfig: WebSocketSubjectConfig<any>;
   handshakeSub: Subscription | null;
   status: BehaviorSubject<string>;
   requestCounter: number;
   handshake: Subject<any>;
   account: Account;
-  keepalive: ConnectableObservable<any>;
+  keepalive: Observable<any>;
 
   constructor(url, private _handshakeMaker, account, keepalive = 60) {
     super();
@@ -40,10 +43,12 @@ export class SakiSocket<T> extends Subject<T> {
       }
     };
 
-    this.keepalive = Observable
-      .timer(1000 * keepalive, 1000 * keepalive)
-      .map(() => this.requestObservable({type: 'keepalive'}).subscribe())
-      .publish();
+    this.keepalive = timer(1000 * keepalive, 1000 * keepalive)
+      .pipe(
+        map(() => this.requestObservable({type: 'keepalive'})),
+        publish()
+      );
+    this.keepalive.subscribe();
 
     this.account = account;
     this.requestCounter = 0;
@@ -53,9 +58,9 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket = new WebSocketSubject(this.wsSubjectConfig);
   }
 
-  serializer(data: any): string {
-    return JSON.stringify(data);
-  }
+  // serializer(data: any): string {
+  //   return JSON.stringify(data);
+  // }
 
   getRequest(data) {
     return Object.assign({}, data, {
@@ -71,7 +76,7 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   send(data: any): void {
-    this.socket.next(this.serializer(data));
+    this.socket.next(data);
   }
 
   sendHandshake(): Subject<any> {
@@ -91,20 +96,20 @@ export class SakiSocket<T> extends Subject<T> {
             console.log(err);
           }}
         );
-      this.handshakeSub.add(this.keepalive.connect()); 
+      this.handshakeSub.add((this.keepalive as any).connect()); 
     }
     return this.handshake;
   }
 
   sendRequest(type, options): Observable<any> {
-    return this.sendHandshake()
-      .ignoreElements()
-      .concat(this.requestObservable({
+    return this.sendHandshake().pipe(
+      ignoreElements(),
+      concat(this.requestObservable({
         type,
         options,
         internal: {user: this.account.get(Saki_USER)}
-      }))
-      .concatMap((resp: Response) => {
+      })),
+      concatMap((resp: Response) => {
         if (resp.error) {
           throw new Error(resp.error);
         }
@@ -116,27 +121,26 @@ export class SakiSocket<T> extends Subject<T> {
           });
         }
         return data;
-      })
-      .share()
-      .takeWhile(resp => {
-        return resp.state !== 'complete';
-      });
+      }),
+      share(),
+      takeWhile(resp => resp.state !== 'complete')
+    );
   }
 
   requestObservable(data: any): Observable<any> {
     const request = this.getRequest(data);
     return Observable.create((observer: Observer<any>) => {
       this.send(request);
-      const subscription = this.socket
-        .filter(resp => resp.requestId === request.requestId)
-        .subscribe(
-          (resp: Response) => {
-            observer.next(resp);
-          },
-          err => {
-            observer.error(err);
-          }
-        );
+      const subscription = this.socket.pipe(
+        filter(resp => resp.requestId === request.requestId)
+      ).subscribe(
+        (resp: Response) => {
+          observer.next(resp);
+        },
+        err => {
+          observer.error(err);
+        }
+      );
       return () => {
         if (request.type !== 'logout' && !request.method) {
           this.send({requestId: request.requestId, type: 'unsubscribe'});
