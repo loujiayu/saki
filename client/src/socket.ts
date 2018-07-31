@@ -58,9 +58,9 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket = new WebSocketSubject(this.wsSubjectConfig);
   }
 
-  serializer(data: any): string {
-    return JSON.stringify(data);
-  }
+  // serializer(data: any): string {
+  //   return JSON.stringify(data);
+  // }
 
   getRequest(data) {
     return Object.assign({}, data, {
@@ -76,7 +76,7 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   send(data: any): void {
-    this.socket.next(this.serializer(data));
+    this.socket.next(data);
   }
 
   sendHandshake(): Subject<any> {

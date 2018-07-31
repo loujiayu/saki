@@ -1,8 +1,5 @@
-import * as path from 'path';
 import * as http from 'http';
-import * as r from 'rethinkdb';
 import Saki from '../src/index';
-import { Saki_JWT, Saki_USER } from '../src/utils/utils';
 
 const SakiServer = require('../../server/src/saki');
 
@@ -31,7 +28,7 @@ afterAll(() => {
   server.close();
 });
 
-describe('login', () => {
+describe.skip('login', () => {
   test('login with wrong id', done => {
     sk.login({username: 'name', password: 'wrong'}).subscribe({
       error: error => {
@@ -42,15 +39,11 @@ describe('login', () => {
   });
 });
 
-describe.only('sign up', () => {
-
+describe.skip('sign up', () => {
   test('', done => {
     sk.signup({username: 'name', password: 'password'}).subscribe({
       next: val => {
-        expect(val).toMatchObject({
-          token: true,
-          user: true
-        });
+        expect(val).toHaveProperty('token');
         done();
       }
     });

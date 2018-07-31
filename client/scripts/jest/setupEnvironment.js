@@ -13,5 +13,4 @@ class localStorage {
   }
 }
 
-
 global.localStorage = new localStorage();

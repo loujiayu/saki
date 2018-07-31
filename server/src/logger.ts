@@ -12,7 +12,7 @@ export class Logger {
   }
 
   setOptions() {
-    this.isDev = process.env.NODE_ENV === 'production';
+    this.isDev = process.env.NODE_ENV !== 'production';
   }
 
   write(message: string) {
