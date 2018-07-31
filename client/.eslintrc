@@ -11,6 +11,5 @@
 		"no-extra-semi": "warn",
 		"semi": "warn"
 	},
-	"extends": ["eslint:recommended", "plugin:jest/recommended"],
-	"plugins": ["jest"]
+	"extends": ["eslint:recommended"]
 }
