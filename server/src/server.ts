@@ -1,8 +1,6 @@
-import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 import * as url from 'url';
 import * as http from 'http';
-import { JsonWebTokenError } from 'jsonwebtoken';
 
 import Request, { IRequest } from './request';
 import Auth from './auth';

@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as http from 'http';
 
 import Saki from '../src/index';

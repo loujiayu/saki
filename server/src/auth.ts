@@ -49,6 +49,7 @@ export default class Auth {
           .get(request.userInfo.username)
           .run(this.server.dbConnection.connection())
           .then((result: IUserInfo) => {
+            console.log(result);
             if (!result) {
               return { error: 'Authentication failed. User not found.' };
             }
