@@ -20,6 +20,10 @@
   dependencies:
     chalk "*"
 
+"@types/events@*":
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/@types/events/-/events-1.2.0.tgz#81a6731ce4df43619e5c8c945383b3e62a89ea86"
+
 "@types/jest@23.3.1":
   version "23.3.1"
   resolved "https://registry.npmjs.org/@types/jest/-/jest-23.3.1.tgz#a4319aedb071d478e6f407d1c4578ec8156829cf"
@@ -40,10 +44,11 @@
   dependencies:
     "@types/node" "*"
 
-"@types/ws@^3.2.0":
-  version "3.2.0"
-  resolved "http://registry.npm.taobao.org/@types/ws/download/@types/ws-3.2.0.tgz#988ff690e6ed10068a86aa0e9f842d0a03c09e21"
+"@types/ws@^5.1.2":
+  version "5.1.2"
+  resolved "https://registry.npmjs.org/@types/ws/-/ws-5.1.2.tgz#f02d3b1cd46db7686734f3ce83bdf46c49decd64"
   dependencies:
+    "@types/events" "*"
     "@types/node" "*"
 
 abab@^1.0.3:
