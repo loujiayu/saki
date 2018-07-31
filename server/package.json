@@ -23,14 +23,14 @@
   "devDependencies": {
     "@types/bluebird": "^3.5.17",
     "@types/chalk": "^2.2.0",
-    "@types/jest": "^22.2.3",
+    "@types/jest": "23.3.1",
     "@types/jsonwebtoken": "^7.2.3",
     "@types/rethinkdb": "^2.3.7",
     "@types/ws": "^3.2.0",
     "eslint": "^4.9.0",
     "eslint-plugin-jest": "^21.5.0",
-    "jest": "^22.0.4",
-    "ts-jest": "^22.4.4",
+    "jest": "23.4.2",
+    "ts-jest": "23.0.1",
     "tslint": "^5.8.0",
     "typescript": "^2.8.3"
   },
