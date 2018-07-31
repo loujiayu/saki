@@ -1,9 +1,9 @@
-import { Observable, Subscription, Subject } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 import { Collection } from './collection';
 import { Account } from './auth';
 import { SakiSocket } from './socket';
-import { Saki_JWT, Saki_USER } from './utils/utils';
 import { errorHandle } from './collection';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
@@ -79,7 +79,9 @@ export default class Saki {
   }
 
   isReady(cb: (value: any) => void): Subscription {
-    return this.wsSubject.status.filter(status => status === 'ready').subscribe(cb);
+    return this.wsSubject.status.pipe(
+      filter(status => status === 'ready')
+    ).subscribe(cb);
   }
 
   collection(name): Collection {
