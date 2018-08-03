@@ -1,4 +1,3 @@
-import * as r from 'rethinkdb';
 import { makeQuery } from './makeQuery';
 
 export async function query(rawRequest, collections, send, errorHandle, dbConnection) {

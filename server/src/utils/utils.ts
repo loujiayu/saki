@@ -1,8 +1,21 @@
 import { IRule } from '../server';
 
+export const indexSeparator = '_saki_index_separator_';
+
 export function invariant(check: boolean, message: string) {
   if (!check)
       throw new Error(message);
+}
+
+export function arraysEqual(a, b) {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length != b.length) return false;
+
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 export function parseRules(
@@ -46,4 +59,11 @@ export function parseRules(
     }
   }
   return rules;
+}
+
+export function compoundIndexGenerator(indexArray: Array<string>): string {
+  if (indexArray.length === 1) {
+    return indexArray[0];
+  }
+  return indexArray.join(indexSeparator);
 }

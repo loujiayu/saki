@@ -4,6 +4,8 @@ import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 
 import Client from '../src/client';
+import { compoundIndexGenerator } from '../src/utils/utils';
+
 const SakiServer = require('../src/saki');
 
 const db = {
@@ -15,7 +17,7 @@ let conn;
 let server;
 let client;
 const rethinkTestTable = r.table('test');
-
+// indexCreate("index1_saki_index_separator_index2", [r.row("index1"), r.row("index2")])
 beforeAll(() => {
   console.log('before all');
   return SakiServer.createServer(http.createServer().listen(8000), {
@@ -385,10 +387,43 @@ describe('validate err', () => {
   test('validate', () => {
     client.handleRequest({
       type: 'query',
-      internal: {user: null},
-      options: {collection: testTableName}
+      internal: { user: null },
+      options: { collection: testTableName }
     });
     expect(mockSendError).toHaveBeenCalledTimes(1);
   });
 });
 
+describe('compound index', () => {
+  const changedIndex = ['index1', 'index2'];
+  beforeEach(() => {
+    // rethinkTestTable.indexDrop(compoundIndexGenerator(changedIndex));
+    return server.changeRules({
+      test: {
+        indexes: [changedIndex],
+        update: () => true,
+        insert: () => true,
+        remove: () => true,
+        fetch: () => true
+      }
+    });
+  });
+  beforeAll(() => {
+    return server.changeRules({
+      test: { 
+        update: () => true,
+        insert: () => true,
+        remove: () => true,
+        fetch: () => true
+      }
+    });
+  });
+
+  test('compound index in db', done => {
+    rethinkTestTable.indexList().run(conn, (err, arr) => {
+      expect(arr).toEqual(
+        expect.arrayContaining([compoundIndexGenerator(changedIndex)]));
+      done();
+    });
+  });
+});

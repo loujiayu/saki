@@ -1,5 +1,4 @@
-import * as path from 'path';
-import { parseRules } from '../src/utils/utils';
+import { parseRules, compoundIndexGenerator, indexSeparator } from '../src/utils/utils';
 
 describe('rules', () => {
   test('throws when argument is undefined', () => {
@@ -28,5 +27,12 @@ describe('rules', () => {
     }).test;
     expect(rules.update()).not.toBeTruthy();
     expect(rules.remove()).toBeTruthy();
+  });
+});
+
+describe('indexes', () => {
+  test('compound index generator', () => {
+    const index = ['a', 'b'];
+    expect(compoundIndexGenerator(index)).toBe(index.join(indexSeparator));
   });
 });

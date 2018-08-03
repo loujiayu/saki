@@ -8,7 +8,7 @@ import Client from './client';
 import Collection from './collection';
 import ReqlConnection from './reql_connection';
 import { invariant, parseRules } from './utils/utils';
-import { ensureTable } from './utils/rethinkdbExtra';
+import { ensureTable, ensureIndex } from './utils/rethinkdbExtra';
 import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 import config from './config';
 import logger from './logger';
@@ -28,6 +28,7 @@ export interface IRule {
   remove: Function;
   insert: Function;
   fetch: Function;
+  indexes?: Array<string | Array<string>>;
 }
 
 export default class Server {
@@ -68,8 +69,9 @@ export default class Server {
     try {
       const conn = await this.dbConnection.connect();
       for (const collection in this.rules) {
-        this.collections.set(collection, new Collection(this.opts.projectName, collection, this));
-        await ensureTable(this.dbConnection.db, collection, conn);
+        const rule = this.rules[collection];
+        this.collections.set(collection, new Collection(this.opts.projectName, collection, rule));
+        await this.createIndex(rule, collection, conn);
       }
     } catch (error) {
       logger.error(error);
@@ -79,6 +81,19 @@ export default class Server {
     }
     this.addHttpListener();
     this.addWebsocket();
+  }
+
+  async createIndex(rule, collection, conn) {
+    try {
+      await ensureTable(this.dbConnection.db, collection, conn);
+      if (rule.indexes) {
+        await Promise.all(
+          rule.indexes.map(idx => ensureIndex(this.dbConnection.db, collection, idx, conn))
+        );
+      }
+    } catch (error) {
+      logger.error(error);
+    }
   }
 
   addHttpListener() {
@@ -104,5 +119,19 @@ export default class Server {
     this.wss.close();
     this.dbConnection.close();
     this.httpServer.close();
+  }
+
+  // just for test
+  async changeRules(rules: { [key: string]: IRule }) {
+    try {
+      this.rules = rules;
+      const conn = await this.dbConnection.connection();
+      for (const collection in this.rules) {
+        const rule = this.rules[collection];
+        await this.createIndex(rule, collection, conn);
+      }
+    } catch (error) {
+      logger.error(error);
+    }
   }
 }
