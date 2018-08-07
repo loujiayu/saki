@@ -5,17 +5,19 @@ function find(query, selector, indexes) {
   if (typeof selector === 'string') {
     return query.get(selector);
   } else if (typeof selector === 'object') {
-    // const keys = Object.keys(selector);
-    // const useIndex = indexes.some(index => {
-    //   if (Array.isArray(index)) {
-    //     return arraysEqual(index.sort(), keys.sort());
-    //   }
-    //   return false;
-    // });
-    // // console.log(useIndex);
-    // if (useIndex) {
-    //   return query.getAll(keys, {index: compoundIndexGenerator(keys)});
-    // }
+    if (indexes) {
+      const keys = Object.keys(selector);
+      const useIndex = indexes.some(index => {
+        if (Array.isArray(index)) {
+          return arraysEqual(index.sort(), keys.sort());
+        }
+        return false;
+      });
+      
+      if (useIndex) {
+        return query.getAll(keys, {index: compoundIndexGenerator(keys)});
+      }
+    }
 
     return query.filter(selector);
   } else {

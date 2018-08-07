@@ -17,9 +17,8 @@ let conn;
 let server;
 let client;
 const rethinkTestTable = r.table('test');
-// indexCreate("index1_saki_index_separator_index2", [r.row("index1"), r.row("index2")])
+
 beforeAll(() => {
-  console.log('before all');
   return SakiServer.createServer(http.createServer().listen(8000), {
     projectName: db.name,
     rdbPort: db.port,
@@ -34,12 +33,15 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  return rethinkTestTable.delete().run(conn)
-    .then(() => {
-      server.close();
-    });
+  return rethinkTestTable.indexList().run(conn).then(indexArray => {
+    return Promise.all(indexArray.map(index => rethinkTestTable.indexDrop(index).run(conn)));
+  }).then(() => {
+    return rethinkTestTable.delete().run(conn)
+      .then(() => {
+        server.close();
+      });
+  });
 });
-
 
 describe('invalid client request', () => {
   const mockRequest = {
@@ -397,7 +399,6 @@ describe('validate err', () => {
 describe('compound index', () => {
   const changedIndex = ['index1', 'index2'];
   beforeEach(() => {
-    // rethinkTestTable.indexDrop(compoundIndexGenerator(changedIndex));
     return server.changeRules({
       test: {
         indexes: [changedIndex],

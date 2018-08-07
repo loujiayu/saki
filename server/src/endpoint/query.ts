@@ -20,6 +20,6 @@ export async function query(rawRequest, collections, send, errorHandle, dbConnec
       send({ data: [], state: 'complete'});
     }
   } catch (e) {
-    errorHandle(e.message)
+    errorHandle(e.message);
   }
 }
