@@ -2,7 +2,7 @@ import * as websocket from 'ws';
 import * as url from 'url';
 import * as http from 'http';
 
-import Request, { IRequest } from './request';
+import Request from './request';
 import Auth from './auth';
 import Client from './client';
 import Collection from './collection';
@@ -44,6 +44,7 @@ export default class Server {
   rules: { [key: string]: IRule };
   wss: websocket.Server;
   clients: Set<Client>;
+  useCache: Boolean;
 
   constructor(httpServer, user_opts) {
     this.opts = Object.assign({}, user_opts, config);
@@ -57,6 +58,8 @@ export default class Server {
     this.clients = new Set();
     this.dbConnection = new ReqlConnection(this, this.opts);
     this.auth = new Auth(this, this.opts);
+
+    this.useCache = true;
   }
 
   static async createServer(httpServer, opts) {

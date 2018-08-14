@@ -135,8 +135,8 @@ export default class Client {
   }
 
   handleRequest(data) {
+    logger.log(`Received request from client: ${JSON.stringify(data)}}`);
     const rawRequest: IRequest = this.parseRequest(data);
-    logger.log(`Received request from client: ${data}`);
     if (rawRequest.type === 'unsubscribe') {
       this.removeRequest(rawRequest.requestId);
       return;

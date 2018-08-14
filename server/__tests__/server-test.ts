@@ -411,7 +411,7 @@ describe('compound index', () => {
   });
   beforeAll(() => {
     return server.changeRules({
-      test: { 
+      test: {
         update: () => true,
         insert: () => true,
         remove: () => true,

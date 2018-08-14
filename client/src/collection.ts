@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import { toArray } from 'rxjs/operators';
 
 import { invariant } from './utils/utils';
 
@@ -115,7 +116,7 @@ export class Collection {
     if (this.query.single) {
       return raw;
     } else {
-      return raw.toArray();
+      return raw.pipe(toArray());
     }
   }
 

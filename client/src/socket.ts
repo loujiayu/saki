@@ -92,7 +92,7 @@ export class SakiSocket<T> extends Subject<T> {
             console.log(err);
           }}
         );
-      this.handshakeSub.add((this.keepalive as any).connect()); 
+      this.handshakeSub.add((this.keepalive as any).connect());
     }
     return this.handshake;
   }
