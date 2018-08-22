@@ -1,4 +1,5 @@
 import Client from './client';
+import { cleanCache, setCache, getCache } from './services/cache';
 
 export interface IInternalRequest {
   user: string;
@@ -6,8 +7,8 @@ export interface IInternalRequest {
 
 export interface IRequest {
   type?: string;
-  options?: IRequestData;
-  internal?: IInternalRequest;
+  options: IRequestData;
+  internal: IInternalRequest;
   requestId: number;
   method?: string;
 }
@@ -27,19 +28,31 @@ function internalField(field, data, value) {
 
 export default class Request {
   dispose;
+  tmpResultMap: Array<any>;
+  mockcache: Map<string, any>;
+  collection: string;
+  user: string | undefined;
+  cacheKey: string;
+
   constructor(
     private rawRequest: IRequest,
     private endpoint: Function,
     private client: Client,
     private id: number
   ) {
+    this.tmpResultMap = [];
+    this.mockcache = new Map();
+
+    this.collection = this.rawRequest.options.collection;
+    this.user = this.rawRequest.internal.user;
+    this.cacheKey = `${this.collection}-${this.user}`;
     this.handleInternalData();
   }
 
   handleInternalData() {
-    if (!this.rawRequest.internal || !this.rawRequest.internal.user) return;
-
     const { user } = this.rawRequest.internal;
+    if (!user) return;
+
     switch (this.endpoint.name) {
       case 'replace':
       case 'insert':
@@ -50,12 +63,50 @@ export default class Request {
     }
   }
 
+  sendData(data) {
+    if (this.client.server.useCache) {
+      if (this.rawRequest.type === 'query') {
+        if (data.state === 'complete') {
+          setCache(this.cacheKey, data.data || this.tmpResultMap);
+        } else {
+          this.tmpResultMap = [...this.tmpResultMap, data.data]
+        }
+      } else {
+        cleanCache(this.cacheKey);
+      }
+    }
+    this.client.sendResponse(this.id, data);
+  }
+
+  sendCacheData(data) {
+    this.client.sendResponse(this.id, {state: 'complete', data});
+  }
+
+  cache() {
+    if (this.rawRequest.type === 'query') {
+      const cacheValue = getCache(this.cacheKey);
+      if (cacheValue) {
+        return cacheValue;
+      } else {
+        this.tmpResultMap = [];
+      }
+    }
+    return null;
+  }
+
   async run() {
     try {
+      if (this.client.server.useCache) {
+        const cacheValue = this.cache();
+        if (cacheValue) {
+          this.sendCacheData(cacheValue);
+          return;
+        }
+      }
       this.dispose = await this.endpoint(
         this.rawRequest.options,
         this.client.server.collections,
-        res => this.client.sendResponse(this.id, res),
+        res => this.sendData(res),
         (error: string) => this.client.sendError(this.id, error),
         this.client.server.dbConnection
       );

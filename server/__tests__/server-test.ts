@@ -1,9 +1,9 @@
 import * as http from 'http';
-import * as path from 'path';
 import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 
 import Client from '../src/client';
+import { mockCache } from '../src/services/cache';
 import { compoundIndexGenerator } from '../src/utils/utils';
 
 const SakiServer = require('../src/saki');
@@ -143,12 +143,14 @@ describe('read', () => {
     mockSendError = jest.fn((id, error) => { });
     client.__proto__.sendResponse = mockSendResponse;
     client.__proto__.sendError = mockSendError;
+    server.useCache = false;
     return rethinkTestTable.insert({
       id: testID,
       name: 'john'
     }).run(conn);
   });
   afterEach(() => {
+    server.useCache = true;
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('find', done => {
@@ -378,6 +380,41 @@ describe('replace', () => {
     });
   });
 });
+
+describe('cache', () => {
+  let testID = 'cache-test-id';
+  let mockSendResponse;
+  let mockSendError;
+
+  beforeEach(() => {
+    mockSendResponse = jest.fn((id, data) => { });
+    mockSendError = jest.fn((id, error) => { });
+    client.__proto__.sendResponse = mockSendResponse;
+    client.__proto__.sendError = mockSendError;
+
+    return rethinkTestTable.insert({
+      id: testID,
+      name: 'john'
+    }).run(conn);
+  })
+
+  afterEach(() => {
+    return (rethinkTestTable.get(testID) as any).delete().run(conn);
+  });
+
+  test('cache by find', done => {
+    client.handleRequest({
+      type: 'query',
+      internal: { user: null },
+      options: { collection: 'test', selector: testID }
+    }).then(() => {
+      console.log(mockCache);
+      // expect(mockCache)
+      // expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
+      done();
+    });
+  })
+})
 
 describe('validate err', () => {
   let testTableName = 'unvalidTable';

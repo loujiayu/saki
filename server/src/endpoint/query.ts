@@ -6,11 +6,10 @@ export async function query(rawRequest, collections, send, errorHandle, dbConnec
     const result = await makeQuery(rawRequest, collections).run(conn);
     if (result !== null) {
       if (result.constructor.name === 'Cursor') {
-        return result.eachAsync(item => {
+        await result.eachAsync(item => {
           send({data: [item]});
-        }).then(() => {
-          send({state: 'complete'});
-        });
+        })
+        send({state: 'complete'});
       } else if (result.constructor.name === 'Array') {
         send({ data: result, state: 'complete' });
       } else {
