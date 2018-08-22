@@ -1,5 +1,5 @@
 import Client from './client';
-import { cleanCache, setCache, getCache } from './services/cache';
+import { cleanCache, setCache, getCache, mockCache } from './services/cache';
 
 export interface IInternalRequest {
   user: string;
@@ -29,7 +29,6 @@ function internalField(field, data, value) {
 export default class Request {
   dispose;
   tmpResultMap: Array<any>;
-  mockcache: Map<string, any>;
   collection: string;
   user: string | undefined;
   cacheKey: string;
@@ -41,7 +40,6 @@ export default class Request {
     private id: number
   ) {
     this.tmpResultMap = [];
-    this.mockcache = new Map();
 
     this.collection = this.rawRequest.options.collection;
     this.user = this.rawRequest.internal.user;

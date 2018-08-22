@@ -3,7 +3,7 @@ import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 
 import Client from '../src/client';
-import { mockCache } from '../src/services/cache';
+import { mockCache, cleanCache } from '../src/services/cache';
 import { compoundIndexGenerator } from '../src/utils/utils';
 
 const SakiServer = require('../src/saki');
@@ -391,7 +391,7 @@ describe('cache', () => {
     mockSendError = jest.fn((id, error) => { });
     client.__proto__.sendResponse = mockSendResponse;
     client.__proto__.sendError = mockSendError;
-
+    cleanCache('test-null');
     return rethinkTestTable.insert({
       id: testID,
       name: 'john'
@@ -402,17 +402,19 @@ describe('cache', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
 
-  test('cache by find', done => {
-    client.handleRequest({
+  test('remove cache after updating', async () => {
+    await client.handleRequest({
       type: 'query',
       internal: { user: null },
       options: { collection: 'test', selector: testID }
-    }).then(() => {
-      console.log(mockCache);
-      // expect(mockCache)
-      // expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
-      done();
-    });
+    })
+    expect(mockCache.get('test-null')).toEqual([{ id: 'cache-test-id', name: 'john' }]);
+    await client.handleRequest({
+      type: 'update',
+      internal: { user: null },
+      options: { collection: 'test', selector: testID, data: { name: 'nane' } }
+    })
+    expect(mockCache.get('test-null')).toBeUndefined();
   })
 })
 
