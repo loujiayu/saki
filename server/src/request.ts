@@ -1,5 +1,5 @@
 import Client from './client';
-import { cleanCache, setCache, getCache, mockCache } from './services/cache';
+import { cleanCache, setCache, getCache } from './services/cache';
 
 export interface IInternalRequest {
   user: string;
@@ -61,41 +61,49 @@ export default class Request {
     }
   }
 
-  sendData(data) {
-    if (this.client.server.useCache) {
-      if (this.rawRequest.type === 'query') {
-        if (data.state === 'complete') {
-          setCache(this.cacheKey, data.data || this.tmpResultMap);
+  async sendData(data) {
+    try {
+      if (this.client.server.useCache) {
+        if (this.rawRequest.type === 'query') {
+          if (data.state === 'complete') {
+            await setCache(this.cacheKey, this.rawRequest.options ,data.data || this.tmpResultMap);
+          } else {
+            this.tmpResultMap = [...this.tmpResultMap, data.data]
+          }
         } else {
-          this.tmpResultMap = [...this.tmpResultMap, data.data]
+          cleanCache(this.cacheKey);
         }
-      } else {
-        cleanCache(this.cacheKey);
       }
+      this.client.sendResponse(this.id, data);
+    } catch (error) {
+      console.log(error);
     }
-    this.client.sendResponse(this.id, data);
   }
 
   sendCacheData(data) {
     this.client.sendResponse(this.id, {state: 'complete', data});
   }
 
-  cache() {
-    if (this.rawRequest.type === 'query') {
-      const cacheValue = getCache(this.cacheKey);
-      if (cacheValue) {
-        return cacheValue;
-      } else {
-        this.tmpResultMap = [];
+  async cache() {
+    try {
+      if (this.rawRequest.type === 'query') {
+        const cacheValue = await getCache(this.cacheKey, this.rawRequest.options);
+        if (cacheValue) {
+          return cacheValue;
+        } else {
+          this.tmpResultMap = [];
+        }
       }
+      return null;
+    } catch (error) {
+      console.log(error);
     }
-    return null;
   }
 
   async run() {
     try {
       if (this.client.server.useCache) {
-        const cacheValue = this.cache();
+        const cacheValue = await this.cache();
         if (cacheValue) {
           this.sendCacheData(cacheValue);
           return;

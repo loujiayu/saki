@@ -1,13 +1,21 @@
+import * as redis from 'redis';
+import * as util from 'util';
+
+const redisURL = 'redis://127.0.0.1:6379';
+const redisClient = redis.createClient(redisURL);
+
+redisClient.hget = util.promisify(redisClient.hget);
+redisClient.del = util.promisify(redisClient.del);
+redisClient.hset = util.promisify(redisClient.hset);
+
 export function cleanCache(key: string) {
-  mockCache.delete(key);
+  redisClient.del(key);
 }
 
-export function setCache(key, value) {
-  mockCache.set(key, value);
+export async function setCache(hashKey, key, value) {
+  await redisClient.hset(hashKey, JSON.stringify(key), JSON.stringify(value));
 }
 
-export function getCache(key) {
-  return mockCache.get(key);
+export async function getCache(hashKey, key) {
+  return JSON.parse(await redisClient.hget(hashKey, JSON.stringify(key)));
 }
-
-export const mockCache = new Map();

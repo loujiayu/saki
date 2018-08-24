@@ -3,7 +3,7 @@ import * as r from 'rethinkdb';
 import * as websocket from 'ws';
 
 import Client from '../src/client';
-import { mockCache, cleanCache } from '../src/services/cache';
+import { cleanCache, getCache } from '../src/services/cache';
 import { compoundIndexGenerator } from '../src/utils/utils';
 
 const SakiServer = require('../src/saki');
@@ -204,6 +204,7 @@ describe('transformations', () => {
     mockSendError = jest.fn((id, error) => { });
     client.__proto__.sendResponse = mockSendResponse;
     client.__proto__.sendError = mockSendError;
+    server.useCache = false;
     return rethinkTestTable.insert([{
       name: 'john',
       age: 25
@@ -216,6 +217,7 @@ describe('transformations', () => {
     }]).run(conn);
   });
   afterEach(() => {
+    server.useCache = true;
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
   test('limit', done => {
@@ -386,13 +388,13 @@ describe('cache', () => {
   let mockSendResponse;
   let mockSendError;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockSendResponse = jest.fn((id, data) => { });
     mockSendError = jest.fn((id, error) => { });
     client.__proto__.sendResponse = mockSendResponse;
     client.__proto__.sendError = mockSendError;
     cleanCache('test-null');
-    return rethinkTestTable.insert({
+    await rethinkTestTable.insert({
       id: testID,
       name: 'john'
     }).run(conn);
@@ -403,18 +405,23 @@ describe('cache', () => {
   });
 
   test('remove cache after updating', async () => {
+    const options = { collection: 'test', selector: testID }
     await client.handleRequest({
       type: 'query',
       internal: { user: null },
-      options: { collection: 'test', selector: testID }
+      options
     })
-    expect(mockCache.get('test-null')).toEqual([{ id: 'cache-test-id', name: 'john' }]);
+    const cacheKey = 'test-null';
+    let cacheValue = await getCache(cacheKey, options);
+
+    expect(cacheValue).toEqual([{ id: 'cache-test-id', name: 'john' }]);
     await client.handleRequest({
       type: 'update',
       internal: { user: null },
       options: { collection: 'test', selector: testID, data: { name: 'nane' } }
     })
-    expect(mockCache.get('test-null')).toBeUndefined();
+    cacheValue = await getCache(cacheKey, options);
+    expect(cacheValue).toBeNull();
   })
 })
 
@@ -424,7 +431,11 @@ describe('validate err', () => {
   beforeEach(() => {
     mockSendError = jest.fn((id, error) => { });
     client.__proto__.sendError = mockSendError;
+    server.useCache = false;
   });
+  afterEach(() => {
+    server.useCache = true;
+  })
   test('validate', () => {
     client.handleRequest({
       type: 'query',
