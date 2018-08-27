@@ -6,10 +6,14 @@ os: linux
 services:
   - redis-server
 addons:
-  - rethinkdb
+  - rethinkdb: "2.3.6"
+cache:
+  directories:
+    - server/node_modules
+    - client/node_modules
 install:
-  - yarn --cwd client install;
-  - yarn --cwd server install;
+  - yarn --cwd client install
+  - yarn --cwd server install
 script:
-  - yarn --cwd client test;
-  - yarn --cwd server test;
+  - yarn --cwd client test
+  - yarn --cwd server test
