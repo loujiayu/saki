@@ -7,8 +7,6 @@ services:
   - redis-server
 addons:
   rethinkdb: '2.3.6'
-before_script:
-  - rethinkdb --daemon
 cache:
   directories:
     - server/node_modules
