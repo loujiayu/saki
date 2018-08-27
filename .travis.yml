@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "8"
+  - "10"
 dist: trusty
 os: linux
 services:
@@ -8,8 +8,8 @@ services:
 addons:
   - rethinkdb
 install:
-  - cd client; yarn install
-  - cd server; yarn install
+  - yarn --cwd client install;
+  - yarn --cwd server install;
 script:
-  - cd client; yarn test
-  - cd server; yarn test
+  - yarn --cwd client test;
+  - yarn --cwd server test;
