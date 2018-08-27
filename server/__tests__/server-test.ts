@@ -9,7 +9,7 @@ import { compoundIndexGenerator } from '../src/utils/utils';
 const SakiServer = require('../src/saki');
 
 const db = {
-  name: 'newa',
+  name: 'saki',
   port: 28015,
   host: '127.0.0.1'
 };

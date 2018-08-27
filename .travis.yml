@@ -3,7 +3,13 @@ node_js:
   - "8"
 dist: trusty
 os: linux
+services:
+  - redis-server
+addons:
+  - rethinkdb
 install:
   - cd client; yarn install
+  - cd server; yarn install
 script:
   - cd client; yarn test
+  - cd server; yarn test
