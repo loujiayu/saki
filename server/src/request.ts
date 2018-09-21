@@ -1,14 +1,10 @@
 import Client from './client';
 import { cleanCache, setCache, getCache } from './services/cache';
 
-export interface IInternalRequest {
-  user: string;
-}
-
 export interface IRequest {
   type?: string;
   options: IRequestData;
-  internal: IInternalRequest;
+  user: string;
   requestId: number;
   method?: string;
 }
@@ -42,13 +38,13 @@ export default class Request {
     this.tmpResultMap = [];
 
     this.collection = this.rawRequest.options.collection;
-    this.user = this.rawRequest.internal.user;
+    this.user = this.rawRequest.user;
     this.cacheKey = `${this.collection}-${this.user}`;
     this.handleInternalData();
   }
 
   handleInternalData() {
-    const { user } = this.rawRequest.internal;
+    const { user } = this.rawRequest;
     if (!user) return;
 
     switch (this.endpoint.name) {

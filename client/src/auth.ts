@@ -35,13 +35,13 @@ export class Account {
     return this.storage.getItem(key);
   }
 
-  clear() {
+  clear(): void {
     this.storage.clear();
     this.authType = 'null';
     this.userInfo = null;
   }
 
-  setUp(authType, userInfo?: Object) {
+  setUp(authType, userInfo?: Object): void {
     this.authType = authType;
     if (userInfo) {
       this.userInfo = userInfo;

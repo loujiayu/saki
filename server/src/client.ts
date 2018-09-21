@@ -114,9 +114,9 @@ export default class Client {
   validate(operation: string, collection: string, rawRequest: IRequest): boolean {
     const rule = this.rules[collection];
     if (!rule) return false;
-    if (!rawRequest.internal || !rawRequest.options) return false;
+    if (!rawRequest.options) return false;
 
-    const { internal: { user }, options: { selector, data } } = rawRequest;
+    const { user, options: { selector, data } } = rawRequest;
     switch (operation) {
       case 'update':
       case 'upsert':
@@ -149,7 +149,7 @@ export default class Client {
       this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
       return;
     }
-    if (!rawRequest.internal || !rawRequest.options) {
+    if (!rawRequest.options) {
       this.sendError(rawRequest.requestId, 'unvalid request');
       return;
     }

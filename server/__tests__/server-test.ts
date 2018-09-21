@@ -45,7 +45,7 @@ afterAll(() => {
 
 describe('invalid client request', () => {
   const mockRequest = {
-    internal: { user: 'john' },
+    user: 'john',
     options: { selector: 'selector' }
   };
   let mockSendResponse;
@@ -93,7 +93,7 @@ describe('insert', () => {
   test('insert one', done => {
     client.handleRequest({
       type: 'insert',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', data: { id: testID, name: 'john' } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].inserted).toBe(1);
@@ -103,12 +103,12 @@ describe('insert', () => {
   test('duplicate primary key', done => {
     client.handleRequest({
       type: 'insert',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', data: { id: testID } }
     }).then(() => {
       return client.handleRequest({
         type: 'insert',
-        internal: { user: null },
+        user: null,
         options: { collection: 'test', data: { id: testID } }
       });
     }).then(() => {
@@ -119,12 +119,12 @@ describe('insert', () => {
   test('insert optinos', done => {
     client.handleRequest({
       type: 'insert',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', data: { id: testID, name: 'john' } }
     }).then(() => {
       return client.handleRequest({
         type: 'insert',
-        internal: { user: null },
+        user: null,
         options: { collection: 'test', data: { id: testID, name: 'andi' }, options: { conflict: 'replace' } }
       });
     }).then(() => {
@@ -156,7 +156,7 @@ describe('read', () => {
   test('find', done => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: testID }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
@@ -166,7 +166,7 @@ describe('read', () => {
   test('find with filter', done => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: { name: 'john' } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
@@ -176,7 +176,7 @@ describe('read', () => {
   test('query with wrong id', done => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: 'wrong-id' }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data).toHaveLength(0);
@@ -186,7 +186,7 @@ describe('read', () => {
   test('query', done => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test' }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
@@ -223,7 +223,7 @@ describe('transformations', () => {
   test('limit', done => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', limit: 2 }
     }).then(() => {
       expect(mockSendResponse.mock.calls).toHaveLength(3);
@@ -252,7 +252,7 @@ describe('remove', () => {
   test('remove by id', done => {
     client.handleRequest({
       type: 'remove',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: testID }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].deleted).toBe(1);
@@ -262,7 +262,7 @@ describe('remove', () => {
   test('remove by filter', done => {
     client.handleRequest({
       type: 'remove',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: { name: 'john-remove' } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].deleted).toBe(1);
@@ -291,7 +291,7 @@ describe('update', () => {
   test('update with id', done => {
     client.handleRequest({
       type: 'update',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: testID, data: { class: { name: 'esan' } } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
@@ -301,7 +301,7 @@ describe('update', () => {
   test('update with filter', done => {
     client.handleRequest({
       type: 'update',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: { class: { name: 'john' } }, data: { class: { name: 'esan' } } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
@@ -335,7 +335,7 @@ describe('upsert', () => {
   test('upsert without id error', done => {
     client.handleRequest({
       type: 'upsert',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: testID + 'errorid', data: { name: 'pappm' } }
     }).then(() => {
       expect(mockSendError).toHaveBeenCalledTimes(1);
@@ -345,7 +345,7 @@ describe('upsert', () => {
   test('update matching doc', done => {
     client.handleRequest({
       type: 'upsert',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: { name: 'john-update' }, data: { name: 'tom', age: 20 } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
@@ -374,7 +374,7 @@ describe('replace', () => {
   test('replace', done => {
     client.handleRequest({
       type: 'replace',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', data: { id: testID, class: { name: 'bob' } } }
     }).then(() => {
       expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
@@ -408,7 +408,7 @@ describe('cache', () => {
     const options = { collection: 'test', selector: testID }
     await client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options
     })
     const cacheKey = 'test-null';
@@ -417,7 +417,7 @@ describe('cache', () => {
     expect(cacheValue).toEqual([{ id: 'cache-test-id', name: 'john' }]);
     await client.handleRequest({
       type: 'update',
-      internal: { user: null },
+      user: null,
       options: { collection: 'test', selector: testID, data: { name: 'nane' } }
     })
     cacheValue = await getCache(cacheKey, options);
@@ -439,7 +439,7 @@ describe('validate err', () => {
   test('validate', () => {
     client.handleRequest({
       type: 'query',
-      internal: { user: null },
+      user: null,
       options: { collection: testTableName }
     });
     expect(mockSendError).toHaveBeenCalledTimes(1);

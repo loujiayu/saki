@@ -103,7 +103,7 @@ export class SakiSocket<T> extends Subject<T> {
       concat(this.requestObservable({
         type,
         options,
-        internal: {user: this.account.get(Saki_USER)}
+        user: this.account.get(Saki_USER)
       })),
       concatMap((resp: Response) => {
         if (resp.error) {
