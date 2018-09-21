@@ -1,0 +1,25 @@
+union Any {
+  Query
+}
+
+enum AuthType: byte {
+  unauthenticated = 0,
+  login,
+  signup,
+  token,
+}
+
+table Query {
+  collection: string;
+}
+
+table Base {
+  msg: Any;
+  user: string;
+  auth_type: AuthType = unauthenticated;
+  request_id: uint32;
+  auth_user: string;
+  password: string;
+}
+
+root_type Base;

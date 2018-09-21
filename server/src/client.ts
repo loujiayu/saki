@@ -1,5 +1,7 @@
 import * as websocket from 'ws';
 import { JsonWebTokenError } from 'jsonwebtoken';
+import { flatbuffers } from 'flatbuffers';
+import * as fbs from './msg_generated';
 
 import Server from './server';
 import Request, { IRequest } from './request';
@@ -77,22 +79,28 @@ export default class Client {
   }
 
   handleHandshake(data) {
-    const request: IRequest = this.parseRequest(data);
-    logger.log(`Received handshake: ${JSON.stringify(request)}`);
-    this.auth.handshake(request).then(res => {
-      let info;
-      if (res.error) {
-        info = { method: request.method, error: res.error };
-        this.createHandshakeHandler();
-      } else {
-        info = { token: res.token, user: res.user, method: request.method };
-        this.socket.on('message', this.handleRequestWrapper);
-      }
-      this.sendResponse(request.requestId, info);
-    }).catch((err: JsonWebTokenError) => {
-      this.sendResponse(request.requestId, { error: err.message });
-      this.createHandshakeHandler();
-    });
+    const u8 = new Uint8Array(data);
+    const bb = new flatbuffers.ByteBuffer(u8);
+    const res = fbs.Base.getRootAsBase(bb);
+    console.log(res.authType() === fbs.AuthType.unauthenticated);
+
+    console.log(data);
+    // const request: IRequest = this.parseRequest(data);
+    // logger.log(`Received handshake: ${JSON.stringify(request)}`);
+    // this.auth.handshake(request).then(res => {
+    //   let info;
+    //   if (res.error) {
+    //     info = { method: request.method, error: res.error };
+    //     this.createHandshakeHandler();
+    //   } else {
+    //     info = { token: res.token, user: res.user, method: request.method };
+    //     this.socket.on('message', this.handleRequestWrapper);
+    //   }
+    //   this.sendResponse(request.requestId, info);
+    // }).catch((err: JsonWebTokenError) => {
+    //   this.sendResponse(request.requestId, { error: err.message });
+    //   this.createHandshakeHandler();
+    // });
   }
 
   handleRequestWrapper(msg) {

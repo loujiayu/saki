@@ -1,10 +1,12 @@
 import { Subscription, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { flatbuffers } from 'flatbuffers';
 
 import { Collection } from './collection';
 import { Account } from './auth';
 import { SakiSocket } from './socket';
 import { errorHandle } from './collection';
+import * as fbs from './msg_generated';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
   `${window.location.host}` || 'localhost:8000';
@@ -48,13 +50,15 @@ export default class Saki {
 
   connect(authType): Subject<any> {
     this.account.setUp(authType);
-    return this.wsSubject.sendHandshake();
+    const builder = new flatbuffers.Builder();
+    fbs.Base.startBase(builder);
+    return this.wsSubject.sendHandshake(builder);
   }
 
-  login(userInfo): Subject<any> {
-    this.account.setUp('login', userInfo);
-    return this.wsSubject.sendHandshake();
-  }
+  // login(userInfo): Subject<any> {
+  //   this.account.setUp('login', userInfo);
+  //   return this.wsSubject.sendHandshake();
+  // }
 
   logout() {
     const handler = errorHandle.call(this.wsSubject, 'logout', {});
@@ -75,7 +79,7 @@ export default class Saki {
 
   signup(userInfo) {
     this.account.setUp('signup', userInfo);
-    return this.wsSubject.sendHandshake();
+    // return this.wsSubject.sendHandshake();
   }
 
   isReady(cb: (value: any) => void): Subscription {

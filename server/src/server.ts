@@ -94,7 +94,7 @@ export default class Server {
           rule.indexes.map(idx => ensureIndex(this.dbConnection.db, collection, idx, conn))
         );
       }
-    } catch (error) {
+  } catch (error) {
       logger.error(error);
     }
   }

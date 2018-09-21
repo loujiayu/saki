@@ -1,5 +1,6 @@
 import root from './utils/root';
 import { Saki_JWT, Saki_USER } from './utils/utils';
+import * as fbs from './msg_generated';
 
 export class Storage {
   setItem(user, token) {
@@ -53,22 +54,28 @@ export class Account {
     return { method: 'signup', userInfo: this.userInfo };
   }
 
-  handshake() {
+  handshake(builder: flatbuffers.Builder) {
     if (this.authType === 'unauthenticated') {
-      return { method: this.authType };
-    } else if (this.authType === 'login') {
-      return { method: this.authType, userInfo: this.userInfo };
-    } else if (this.authType === 'signup') {
-      return { method: this.authType, userInfo: this.userInfo };
-    } else if (this.authType === 'token') {
-      const token = this.get(Saki_JWT);
-      if (typeof token === 'string') {
-        return { method: this.authType, token };
-      } else {
-        throw new Error('invalid token');
-      }
-    } else {
-      return { method: this.authType };
-    }
+      fbs.Base.addAuthType(builder, fbs.AuthType.unauthenticated);
+      // return { method: this.authType };
+    } 
+
+    // todo user login
+    // else if (this.authType === 'login') {
+    //   fbs.Base.addAuthType(builder, fbs.AuthType.login);
+    //   // fbs.Base.addAuthUser(builder, builder.createString(builder, this.userInfo.username))
+    //   return { method: this.authType, userInfo: this.userInfo };
+    // } else if (this.authType === 'signup') {
+    //   return { method: this.authType, userInfo: this.userInfo };
+    // } else if (this.authType === 'token') {
+    //   const token = this.get(Saki_JWT);
+    //   if (typeof token === 'string') {
+    //     return { method: this.authType, token };
+    //   } else {
+    //     throw new Error('invalid token');
+    //   }
+    // } else {
+    //   return { method: this.authType };
+    // }
   }
 }

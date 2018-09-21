@@ -7,7 +7,7 @@ import {
   Subscription,
   timer
 } from 'rxjs';
-
+import * as fbs from './msg_generated';
 import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter} from 'rxjs/operators';
 
 import { Account } from './auth';
@@ -36,6 +36,12 @@ export class SakiSocket<T> extends Subject<T> {
     super();
     this.wsSubjectConfig = {
       url,
+      serializer: value => {
+        return value;
+      },
+      deserializer: e => {
+        return JSON.parse(e.data)
+      },
       closeObserver: {
         next: () => {
           this.removeHandshake();
@@ -43,12 +49,12 @@ export class SakiSocket<T> extends Subject<T> {
       }
     };
 
-    this.keepalive = timer(1000 * keepalive, 1000 * keepalive)
-      .pipe(
-        map(() => this.requestObservable({type: 'keepalive'})),
-        publish()
-      );
-    this.keepalive.subscribe();
+    // this.keepalive = timer(1000 * keepalive, 1000 * keepalive)
+    //   .pipe(
+    //     map(() => this.requestObservable({type: 'keepalive'})),
+    //     publish()
+    //   );
+    // this.keepalive.subscribe();
 
     this.account = account;
     this.requestCounter = 0;
@@ -58,10 +64,8 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket = new WebSocketSubject(this.wsSubjectConfig);
   }
 
-  getRequest(data) {
-    return Object.assign({}, data, {
-      requestId: this.requestCounter++,
-    });
+  getRequest(builder: flatbuffers.Builder) {
+    fbs.Base.addRequestId(builder, this.requestCounter++);
   }
 
   removeHandshake() {
@@ -75,9 +79,10 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket.next(data);
   }
 
-  sendHandshake(): Subject<any> {
+  sendHandshake(builder: flatbuffers.Builder): Subject<any> {
     if (!this.handshakeSub) {
-      this.handshakeSub = this.requestObservable(this._handshakeMaker())
+      this._handshakeMaker(builder)
+      this.handshakeSub = this.requestObservable(builder)
         .subscribe({
           next: m => {
             if (m.error) {
@@ -97,14 +102,11 @@ export class SakiSocket<T> extends Subject<T> {
     return this.handshake;
   }
 
-  sendRequest(type, options): Observable<any> {
-    return this.sendHandshake().pipe(
+  sendRequest(builder: flatbuffers.Builder): Observable<any> {
+    fbs.Base.addUser(builder, builder.createString(this.account.get(Saki_USER)));
+    return this.sendHandshake(builder).pipe(
       ignoreElements(),
-      concat(this.requestObservable({
-        type,
-        options,
-        user: this.account.get(Saki_USER)
-      })),
+      concat(this.requestObservable(builder)),
       concatMap((resp: Response) => {
         if (resp.error) {
           throw new Error(resp.error);
@@ -123,12 +125,18 @@ export class SakiSocket<T> extends Subject<T> {
     );
   }
 
-  requestObservable(data: any): Observable<any> {
-    const request = this.getRequest(data);
+  requestObservable(builder: flatbuffers.Builder): Observable<any> {
+    this.getRequest(builder);
     return Observable.create((observer: Observer<any>) => {
-      this.send(request);
+      builder.finish(fbs.Base.endBase(builder));
+
+      this.send(builder.asUint8Array());
+
+      const buf = builder.dataBuffer();
+      const base = fbs.Base.getRootAsBase(buf);
+
       const subscription = this.socket.pipe(
-        filter(resp => resp.requestId === request.requestId)
+        filter(resp => resp.requestId === base.requestId())
       ).subscribe(
         (resp: Response) => {
           observer.next(resp);
@@ -138,8 +146,8 @@ export class SakiSocket<T> extends Subject<T> {
         }
       );
       return () => {
-        if (request.type !== 'logout' && !request.method) {
-          this.send({requestId: request.requestId, type: 'unsubscribe'});
+        if (!base.authType) {
+          // this.send({requestId: request.requestId, type: 'unsubscribe'});
         }
         subscription.unsubscribe();
       };
