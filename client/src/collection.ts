@@ -123,7 +123,6 @@ export class Collection {
     fbs.Base.startBase(this.builder);
     fbs.Base.addMsg(this.builder, msg);
     fbs.Base.addMsgType(this.builder, fbs.Any.Query);
-    // this.builder.finish(fbs.Base.endBase(this.builder));
 
     const raw = this.sendRequest(this.builder);
     return raw.pipe(toArray);

@@ -70,14 +70,14 @@ export default class Request {
           cleanCache(this.cacheKey);
         }
       }
-      this.client.sendResponse(this.id, data);
+      // this.client.sendResponse(this.id, data);
     } catch (error) {
       console.log(error);
     }
   }
 
   sendCacheData(data) {
-    this.client.sendResponse(this.id, {state: 'complete', data});
+    // this.client.sendResponse(this.id, {state: 'complete', data});
   }
 
   async cache() {

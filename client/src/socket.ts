@@ -5,10 +5,11 @@ import {
   Subject,
   Observer,
   Subscription,
-  timer
+  timer,
 } from 'rxjs';
+import { flatbuffers } from 'flatbuffers';
 import * as fbs from './msg_generated';
-import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter} from 'rxjs/operators';
+import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter, mergeMap} from 'rxjs/operators';
 
 import { Account } from './auth';
 import { Saki_USER } from './utils/utils';
@@ -40,7 +41,7 @@ export class SakiSocket<T> extends Subject<T> {
         return value;
       },
       deserializer: e => {
-        return JSON.parse(e.data)
+        return e.data;
       },
       closeObserver: {
         next: () => {
@@ -64,10 +65,6 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket = new WebSocketSubject(this.wsSubjectConfig);
   }
 
-  getRequest(builder: flatbuffers.Builder) {
-    fbs.Base.addRequestId(builder, this.requestCounter++);
-  }
-
   removeHandshake() {
     if (this.handshakeSub) {
       this.handshakeSub.unsubscribe();
@@ -81,12 +78,16 @@ export class SakiSocket<T> extends Subject<T> {
 
   sendHandshake(builder: flatbuffers.Builder): Subject<any> {
     if (!this.handshakeSub) {
-      this._handshakeMaker(builder)
+      const authOffset = this._handshakeMaker(builder);
+      fbs.Base.startBase(builder);
+      fbs.Base.addMsg(builder, authOffset);
+      fbs.Base.addMsgType(builder, fbs.Any.Auth);
+
       this.handshakeSub = this.requestObservable(builder)
         .subscribe({
-          next: m => {
-            if (m.error) {
-              this.handshake.error(m.error);
+          next: (m: fbs.AuthRes) => {
+            if (m.error()) {
+              this.handshake.error(m.error());
             } else {
               this.status.next(STATUS_READY);
               this.handshake.next(m);
@@ -97,13 +98,12 @@ export class SakiSocket<T> extends Subject<T> {
             console.log(err);
           }}
         );
-      this.handshakeSub.add((this.keepalive as any).connect());
+      // this.handshakeSub.add((this.keepalive as any).connect());
     }
     return this.handshake;
   }
 
   sendRequest(builder: flatbuffers.Builder): Observable<any> {
-    fbs.Base.addUser(builder, builder.createString(this.account.get(Saki_USER)));
     return this.sendHandshake(builder).pipe(
       ignoreElements(),
       concat(this.requestObservable(builder)),
@@ -126,8 +126,12 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   requestObservable(builder: flatbuffers.Builder): Observable<any> {
-    this.getRequest(builder);
     return Observable.create((observer: Observer<any>) => {
+      
+      fbs.Base.addRequestId(builder, this.requestCounter++);
+      if (this.account.get(Saki_USER)) {
+        fbs.Base.addUser(builder, builder.createString(this.account.get(Saki_USER)));
+      }
       builder.finish(fbs.Base.endBase(builder));
 
       this.send(builder.asUint8Array());
@@ -136,17 +140,35 @@ export class SakiSocket<T> extends Subject<T> {
       const base = fbs.Base.getRootAsBase(buf);
 
       const subscription = this.socket.pipe(
-        filter(resp => resp.requestId === base.requestId())
+        mergeMap(
+          resp => new Promise((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.onload = (event: ProgressEvent) => {
+              const ab = (event as any).target.result;
+              const u8 = new Uint8Array(ab);
+              const bb = new flatbuffers.ByteBuffer(u8);
+              const resBase = fbs.Base.getRootAsBase(bb);
+              resolve(resBase);
+            }
+            fileReader.readAsArrayBuffer(resp);
+          }),
+        ),
+        filter((resp: fbs.Base) => resp.requestId() === base.requestId())
       ).subscribe(
-        (resp: Response) => {
-          observer.next(resp);
+        (resp: fbs.Base) => {
+          let result;
+          if (resp.msgType() === fbs.Any.AuthRes) {
+            result = new fbs.AuthRes();
+            resp.msg(result);
+          }
+          observer.next(result);
         },
         err => {
           observer.error(err);
         }
       );
       return () => {
-        if (!base.authType) {
+        if (!base.msgType()) {
           // this.send({requestId: request.requestId, type: 'unsubscribe'});
         }
         subscription.unsubscribe();

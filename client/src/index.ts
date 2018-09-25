@@ -37,9 +37,9 @@ export default class Saki {
 
   handshake() {
     this.wsSubject.handshake.subscribe({
-      next: resp => {
-        if (resp.token && resp.user) {
-          this.account.set(resp.user, resp.token);
+      next: (resp: fbs.AuthRes) => {
+        if (resp.token() && resp.username()) {
+          this.account.set(resp.username()!, resp.token()!);
         }
       },
       error: () => {
@@ -51,7 +51,7 @@ export default class Saki {
   connect(authType): Subject<any> {
     this.account.setUp(authType);
     const builder = new flatbuffers.Builder();
-    fbs.Base.startBase(builder);
+    // fbs.Base.startBase(builder);
     return this.wsSubject.sendHandshake(builder);
   }
 

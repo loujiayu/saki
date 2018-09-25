@@ -1,5 +1,7 @@
 union Any {
-  Query
+  Query,
+  Auth,
+  AuthRes
 }
 
 enum AuthType: byte {
@@ -13,13 +15,23 @@ table Query {
   collection: string;
 }
 
+table Auth {
+  type: AuthType = unauthenticated;
+  username: string;
+  password: string;
+  token: string;
+}
+
+table AuthRes {
+  username: string;
+  token: string;
+  error: string;
+}
+
 table Base {
   msg: Any;
   user: string;
-  auth_type: AuthType = unauthenticated;
   request_id: uint32;
-  auth_user: string;
-  password: string;
 }
 
 root_type Base;

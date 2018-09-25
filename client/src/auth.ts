@@ -55,11 +55,14 @@ export class Account {
   }
 
   handshake(builder: flatbuffers.Builder) {
+    fbs.Auth.startAuth(builder);
     if (this.authType === 'unauthenticated') {
-      fbs.Base.addAuthType(builder, fbs.AuthType.unauthenticated);
+      fbs.Auth.addType(builder, fbs.AuthType.unauthenticated);
       // return { method: this.authType };
-    } 
-
+    }
+    return fbs.Auth.endAuth(builder);
+    // fbs.Base.addMsg(builder, fbs.Auth.endAuth(builder));
+    // fbs.Base.addMsgType(builder, fbs.Any.Auth);
     // todo user login
     // else if (this.authType === 'login') {
     //   fbs.Base.addAuthType(builder, fbs.AuthType.login);

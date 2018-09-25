@@ -5,7 +5,9 @@
  */
 export enum Any{
   NONE= 0,
-  Query= 1
+  Query= 1,
+  Auth= 2,
+  AuthRes= 3
 };
 
 /**
@@ -90,6 +92,236 @@ static endQuery(builder:flatbuffers.Builder):flatbuffers.Offset {
 /**
  * @constructor
  */
+export class Auth {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {Auth}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):Auth {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {Auth=} obj
+ * @returns {Auth}
+ */
+static getRootAsAuth(bb:flatbuffers.ByteBuffer, obj?:Auth):Auth {
+  return (obj || new Auth).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @returns {AuthType}
+ */
+type():AuthType {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? /** @type {AuthType} */ (this.bb!.readInt8(this.bb_pos + offset)) : AuthType.unauthenticated;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+username():string|null
+username(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+username(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+password():string|null
+password(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+password(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+token():string|null
+token(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+token(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 10);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startAuth(builder:flatbuffers.Builder) {
+  builder.startObject(4);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {AuthType} type
+ */
+static addType(builder:flatbuffers.Builder, type:AuthType) {
+  builder.addFieldInt8(0, type, AuthType.unauthenticated);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} usernameOffset
+ */
+static addUsername(builder:flatbuffers.Builder, usernameOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(1, usernameOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} passwordOffset
+ */
+static addPassword(builder:flatbuffers.Builder, passwordOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, passwordOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} tokenOffset
+ */
+static addToken(builder:flatbuffers.Builder, tokenOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(3, tokenOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endAuth(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
+export class AuthRes {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {AuthRes}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):AuthRes {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {AuthRes=} obj
+ * @returns {AuthRes}
+ */
+static getRootAsAuthRes(bb:flatbuffers.ByteBuffer, obj?:AuthRes):AuthRes {
+  return (obj || new AuthRes).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+username():string|null
+username(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+username(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+token():string|null
+token(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+token(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+error():string|null
+error(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+error(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startAuthRes(builder:flatbuffers.Builder) {
+  builder.startObject(3);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} usernameOffset
+ */
+static addUsername(builder:flatbuffers.Builder, usernameOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(0, usernameOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} tokenOffset
+ */
+static addToken(builder:flatbuffers.Builder, tokenOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(1, tokenOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} errorOffset
+ */
+static addError(builder:flatbuffers.Builder, errorOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, errorOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endAuthRes(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
 export class Base {
   /**
    * @type {flatbuffers.ByteBuffer}
@@ -149,48 +381,18 @@ user(optionalEncoding?:any):string|Uint8Array|null {
 };
 
 /**
- * @returns {AuthType}
- */
-authType():AuthType {
-  var offset = this.bb!.__offset(this.bb_pos, 10);
-  return offset ? /** @type {AuthType} */ (this.bb!.readInt8(this.bb_pos + offset)) : AuthType.unauthenticated;
-};
-
-/**
  * @returns {number}
  */
 requestId():number {
-  var offset = this.bb!.__offset(this.bb_pos, 12);
+  var offset = this.bb!.__offset(this.bb_pos, 10);
   return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
-};
-
-/**
- * @param {flatbuffers.Encoding=} optionalEncoding
- * @returns {string|Uint8Array|null}
- */
-authUser():string|null
-authUser(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
-authUser(optionalEncoding?:any):string|Uint8Array|null {
-  var offset = this.bb!.__offset(this.bb_pos, 14);
-  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
-};
-
-/**
- * @param {flatbuffers.Encoding=} optionalEncoding
- * @returns {string|Uint8Array|null}
- */
-password():string|null
-password(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
-password(optionalEncoding?:any):string|Uint8Array|null {
-  var offset = this.bb!.__offset(this.bb_pos, 16);
-  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
 };
 
 /**
  * @param {flatbuffers.Builder} builder
  */
 static startBase(builder:flatbuffers.Builder) {
-  builder.startObject(7);
+  builder.startObject(4);
 };
 
 /**
@@ -219,34 +421,10 @@ static addUser(builder:flatbuffers.Builder, userOffset:flatbuffers.Offset) {
 
 /**
  * @param {flatbuffers.Builder} builder
- * @param {AuthType} authType
- */
-static addAuthType(builder:flatbuffers.Builder, authType:AuthType) {
-  builder.addFieldInt8(3, authType, AuthType.unauthenticated);
-};
-
-/**
- * @param {flatbuffers.Builder} builder
  * @param {number} requestId
  */
 static addRequestId(builder:flatbuffers.Builder, requestId:number) {
-  builder.addFieldInt32(4, requestId, 0);
-};
-
-/**
- * @param {flatbuffers.Builder} builder
- * @param {flatbuffers.Offset} authUserOffset
- */
-static addAuthUser(builder:flatbuffers.Builder, authUserOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(5, authUserOffset, 0);
-};
-
-/**
- * @param {flatbuffers.Builder} builder
- * @param {flatbuffers.Offset} passwordOffset
- */
-static addPassword(builder:flatbuffers.Builder, passwordOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(6, passwordOffset, 0);
+  builder.addFieldInt32(3, requestId, 0);
 };
 
 /**

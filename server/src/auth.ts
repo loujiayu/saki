@@ -2,7 +2,9 @@ import * as bluebird from 'bluebird';
 import * as jsonwebtoken from 'jsonwebtoken';
 import * as r from 'rethinkdb';
 import Server from './server';
+import * as fbs from './msg_generated';
 import { hashPassword, verifyPassword} from './utils/password';
+import {invariant} from './utils/utils';
 
 const jwt: any = bluebird.promisifyAll(jsonwebtoken);
 
@@ -42,42 +44,41 @@ export default class Auth {
     this._jwt = new JWT(user_options);
   }
 
-  handshake(request): Promise<any> {
-    switch(request.method) {
-      case 'login':
+  handshake(auth: fbs.Auth): Promise<any> {
+    switch(auth.type()) {
+      case fbs.AuthType.login:
         return r.table(this.server.dbConnection.userTableName)
-          .get(request.userInfo.username)
+          .get(auth.username()!)
           .run(this.server.dbConnection.connection())
           .then((result: IUserInfo) => {
             console.log(result);
             if (!result) {
               return { error: 'Authentication failed. User not found.' };
             }
-            if (verifyPassword(request.userInfo.password, result.password)) {
-              return { ...this._jwt.sign({id: result.password}), user: request.userInfo.username};
+            if (verifyPassword(auth.password()!, result.password)) {
+              return { ...this._jwt.sign({id: result.password}), user: auth.username()};
             } else {
               return { error: 'Authentication failed. Wrong password.'};
             }
           });
-      case 'token':
-        return this._jwt.verify(request.token);
-      case 'signup':
-        const row = request.userInfo;
-        row.password = hashPassword(row.password);
+      case fbs.AuthType.token:
+        return this._jwt.verify(auth.token());
+      case fbs.AuthType.signup:
+        const password = hashPassword(auth.password()!);
         return r.table(this.server.dbConnection.userTableName)
-          .insert({...row, id: row.username}, { conflict: 'error' })
+          .insert({password, id: auth.username()}, { conflict: 'error' })
           .run(this.server.dbConnection.connection())
           .then(({ first_error }) => {
             if (first_error) {
               return { error: first_error };
             } else {
-              return { ...this._jwt.sign({id: row.password}), user: row.username };
+              return { ...this._jwt.sign({id: password}), user: auth.username() };
             }
           });
-      case 'unauthenticated':
+      case fbs.AuthType.unauthenticated:
         return Promise.resolve({});
       default:
-        return Promise.reject({message: `Unknown handshake method "${request.method}"`});
+        return Promise.reject({message: `Unknown handshake method "${auth.username()}"`});
     }
   }
 }

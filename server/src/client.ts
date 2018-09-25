@@ -62,45 +62,68 @@ export default class Client {
     }
   }
 
-  sendResponse(requestId, data) {
+  sendResponse(data: Uint8Array) {
     if (!this.isOpen()) return;
-    
-    data.requestId = requestId;
-    logger.log(`Sending response: ${JSON.stringify(data)}`);
+    const bb = new flatbuffers.ByteBuffer(data);
+    const resBase = fbs.Base.getRootAsBase(bb);
+    console.log(resBase.requestId());
+
     try {
-      this.socket.send(JSON.stringify(data));
+      this.socket.send(data);
     } catch (e) {
       logger.error(e);
     }
   }
 
   sendError(requestId: number, error: string) {
-    this.sendResponse(requestId, { error });
+    // this.sendResponse(requestId, { error });
   }
 
   handleHandshake(data) {
     const u8 = new Uint8Array(data);
     const bb = new flatbuffers.ByteBuffer(u8);
-    const res = fbs.Base.getRootAsBase(bb);
-    console.log(res.authType() === fbs.AuthType.unauthenticated);
+    const resBase = fbs.Base.getRootAsBase(bb);
 
-    console.log(data);
-    // const request: IRequest = this.parseRequest(data);
-    // logger.log(`Received handshake: ${JSON.stringify(request)}`);
-    // this.auth.handshake(request).then(res => {
-    //   let info;
-    //   if (res.error) {
-    //     info = { method: request.method, error: res.error };
-    //     this.createHandshakeHandler();
-    //   } else {
-    //     info = { token: res.token, user: res.user, method: request.method };
-    //     this.socket.on('message', this.handleRequestWrapper);
-    //   }
-    //   this.sendResponse(request.requestId, info);
-    // }).catch((err: JsonWebTokenError) => {
-    //   this.sendResponse(request.requestId, { error: err.message });
-    //   this.createHandshakeHandler();
-    // });
+    const msg = new fbs.Auth();
+    resBase.msg(msg);
+    
+    this.auth.handshake(msg).then(res => {
+      const builder = new flatbuffers.Builder();
+      fbs.AuthRes.startAuthRes(builder);
+
+      if (res.error) {
+        fbs.AuthRes.addError(builder, builder.createString(res.error));
+        this.createHandshakeHandler();
+      } else {
+        if (res.token) {
+          fbs.AuthRes.addToken(builder, builder.createString(res.token));
+        }
+        if (res.user) {
+          fbs.AuthRes.addUsername(builder, builder.createString(res.user));
+        }
+        this.socket.on('message', this.handleRequestWrapper);
+      }
+      const msg = fbs.AuthRes.endAuthRes(builder);
+      fbs.Base.startBase(builder);
+      fbs.Base.addMsg(builder, msg);
+      fbs.Base.addMsgType(builder, fbs.Any.AuthRes);
+      fbs.Base.addRequestId(builder, resBase.requestId());
+      builder.finish(fbs.Base.endBase(builder));
+      this.sendResponse(builder.asUint8Array());
+    }).catch((err: JsonWebTokenError) => {
+      console.log(err);
+      const builder = new flatbuffers.Builder();
+      fbs.AuthRes.startAuthRes(builder);
+      fbs.AuthRes.addError(builder, builder.createString(err.message));
+      const msg = fbs.AuthRes.endAuthRes(builder);
+      fbs.Base.startBase(builder);
+      fbs.Base.addMsg(builder, msg);
+      fbs.Base.addMsgType(builder, fbs.Any.AuthRes);
+      fbs.Base.addRequestId(builder, resBase.requestId());
+      builder.finish(fbs.Base.endBase(builder));
+      this.sendResponse(builder.asUint8Array());
+      this.createHandshakeHandler();
+    });
   }
 
   handleRequestWrapper(msg) {
@@ -149,12 +172,12 @@ export default class Client {
       this.removeRequest(rawRequest.requestId);
       return;
     } else if (rawRequest.type === 'keepalive') {
-      this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
+      // this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
       return;
     } else if (rawRequest.type === 'logout') {
       this.createHandshakeHandler();
       this.removeRequest(rawRequest.requestId);
-      this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
+      // this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
       return;
     }
     if (!rawRequest.options) {
