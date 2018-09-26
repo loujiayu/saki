@@ -18,12 +18,6 @@ import { Saki_USER } from './utils/utils';
 const STATUS_UNCONNECTED = 'unconnected';
 const STATUS_READY = 'ready';
 
-interface Response {
-  data: any[];
-  state?: string;
-  error?: any;
-}
-
 export class SakiSocket<T> extends Subject<T> {
   socket: WebSocketSubject<any>;
   wsSubjectConfig: WebSocketSubjectConfig<any>;
@@ -114,7 +108,7 @@ export class SakiSocket<T> extends Subject<T> {
     return this.sendHandshake().pipe(
       ignoreElements(),
       concat(this.requestObservable(builder)),
-      concatMap((resp: fbs.Response) => {
+      concatMap((resp: fbs.QueryRes) => {
         if (resp.error()) {
           throw new Error(resp.error()!);
         }
@@ -163,10 +157,13 @@ export class SakiSocket<T> extends Subject<T> {
             result = new fbs.AuthRes();
             resp.msg(result);
             observer.next(result);
-          } else if (resp.msgType() === fbs.Any.Response) {
-            result = new fbs.Response();
+          } else if (resp.msgType() === fbs.Any.QueryRes) {
+            result = new fbs.QueryRes();
             resp.msg(result);
             if (result.done()) {
+              if (result.dataArray()) {
+                observer.next(result);
+              }
               observer.complete();
             } else {
               observer.next(result);

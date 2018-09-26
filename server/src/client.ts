@@ -88,12 +88,12 @@ export default class Client {
   sendError(requestId: number, error: string) {
     const builder = new flatbuffers.Builder();
     const error_ = builder.createString(error)
-    fbs.Response.startResponse(builder);
-    fbs.Response.addError(builder, error_);
-    const msg = fbs.Response.endResponse(builder);
+    fbs.QueryRes.startQueryRes(builder);
+    fbs.QueryRes.addError(builder, error_);
+    const msg = fbs.QueryRes.endQueryRes(builder);
     fbs.Base.startBase(builder);
     fbs.Base.addMsg(builder, msg);
-    fbs.Base.addMsgType(builder, fbs.Any.Response);
+    fbs.Base.addMsgType(builder, fbs.Any.QueryRes);
     fbs.Base.addRequestId(builder, requestId);
     builder.finish(fbs.Base.endBase(builder));
     
@@ -209,10 +209,10 @@ export default class Client {
     // }
 
     const endpoint = this.getRequestHandler(reqBase.msgType());
-    // if (!endpoint) {
-    //   this.sendError(rawRequest.requestId, 'unknown endpoint');
-    //   return;
-    // }
+    if (!endpoint) {
+      this.sendError(reqBase.requestId(), 'unknown endpoint');
+      return;
+    }
     // const collection = rawRequest.options.collection;
     // if (!this.validate(endpoint.name, collection, rawRequest)) {
     //   this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);

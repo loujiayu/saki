@@ -20,15 +20,13 @@
       //     console.log(val);
       //   }
       // })
-      sk.collection('projects').fetch().subscribe({
+      sk.collection('projects').find('devUser-21').fetch().subscribe({
         next: val => {
-          // console.log(Date());
           console.log(val);
         },
         complete: () => {
           console.log('object');
         },
-
       })
       // const ss = sk.collection('test');
       // ss.watch().subscribe(val => {

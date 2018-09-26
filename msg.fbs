@@ -2,7 +2,9 @@ union Any {
   Query,
   Auth,
   AuthRes,
-  Response,
+  QueryRes,
+  Insert,
+  InsertRes
 }
 
 enum AuthType: byte {
@@ -14,9 +16,20 @@ enum AuthType: byte {
 
 table Query {
   collection: string;
+  limit: int;
+  selector: string;
+  single: bool;
 }
 
-table Response {
+table Insert {
+  data: [ubyte];
+}
+
+table InsertRes {
+  done: bool;
+}
+
+table QueryRes {
   done: bool;
   data: [ubyte];
   error: string;

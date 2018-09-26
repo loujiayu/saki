@@ -8,7 +8,9 @@ export enum Any{
   Query= 1,
   Auth= 2,
   AuthRes= 3,
-  Response= 4
+  QueryRes= 4,
+  Insert= 5,
+  InsertRes= 6
 };
 
 /**
@@ -66,10 +68,37 @@ collection(optionalEncoding?:any):string|Uint8Array|null {
 };
 
 /**
+ * @returns {number}
+ */
+limit():number {
+  var offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.readInt32(this.bb_pos + offset) : 0;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+selector():string|null
+selector(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+selector(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @returns {boolean}
+ */
+single():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 10);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
  * @param {flatbuffers.Builder} builder
  */
 static startQuery(builder:flatbuffers.Builder) {
-  builder.startObject(1);
+  builder.startObject(4);
 };
 
 /**
@@ -78,6 +107,30 @@ static startQuery(builder:flatbuffers.Builder) {
  */
 static addCollection(builder:flatbuffers.Builder, collectionOffset:flatbuffers.Offset) {
   builder.addFieldOffset(0, collectionOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {number} limit
+ */
+static addLimit(builder:flatbuffers.Builder, limit:number) {
+  builder.addFieldInt32(1, limit, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} selectorOffset
+ */
+static addSelector(builder:flatbuffers.Builder, selectorOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, selectorOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {boolean} single
+ */
+static addSingle(builder:flatbuffers.Builder, single:boolean) {
+  builder.addFieldInt8(3, +single, +false);
 };
 
 /**
@@ -93,7 +146,7 @@ static endQuery(builder:flatbuffers.Builder):flatbuffers.Offset {
 /**
  * @constructor
  */
-export class Response {
+export class Insert {
   /**
    * @type {flatbuffers.ByteBuffer}
    */
@@ -106,9 +159,9 @@ export class Response {
 /**
  * @param {number} i
  * @param {flatbuffers.ByteBuffer} bb
- * @returns {Response}
+ * @returns {Insert}
  */
-__init(i:number, bb:flatbuffers.ByteBuffer):Response {
+__init(i:number, bb:flatbuffers.ByteBuffer):Insert {
   this.bb_pos = i;
   this.bb = bb;
   return this;
@@ -116,11 +169,181 @@ __init(i:number, bb:flatbuffers.ByteBuffer):Response {
 
 /**
  * @param {flatbuffers.ByteBuffer} bb
- * @param {Response=} obj
- * @returns {Response}
+ * @param {Insert=} obj
+ * @returns {Insert}
  */
-static getRootAsResponse(bb:flatbuffers.ByteBuffer, obj?:Response):Response {
-  return (obj || new Response).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+static getRootAsInsert(bb:flatbuffers.ByteBuffer, obj?:Insert):Insert {
+  return (obj || new Insert).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {number} index
+ * @returns {number}
+ */
+data(index: number):number|null {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+};
+
+/**
+ * @returns {number}
+ */
+dataLength():number {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+};
+
+/**
+ * @returns {Uint8Array}
+ */
+dataArray():Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startInsert(builder:flatbuffers.Builder) {
+  builder.startObject(1);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} dataOffset
+ */
+static addData(builder:flatbuffers.Builder, dataOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(0, dataOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {Array.<number>} data
+ * @returns {flatbuffers.Offset}
+ */
+static createDataVector(builder:flatbuffers.Builder, data:number[] | Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (var i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]);
+  }
+  return builder.endVector();
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {number} numElems
+ */
+static startDataVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endInsert(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
+export class InsertRes {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {InsertRes}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):InsertRes {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {InsertRes=} obj
+ * @returns {InsertRes}
+ */
+static getRootAsInsertRes(bb:flatbuffers.ByteBuffer, obj?:InsertRes):InsertRes {
+  return (obj || new InsertRes).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @returns {boolean}
+ */
+done():boolean {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? !!this.bb!.readInt8(this.bb_pos + offset) : false;
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startInsertRes(builder:flatbuffers.Builder) {
+  builder.startObject(1);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {boolean} done
+ */
+static addDone(builder:flatbuffers.Builder, done:boolean) {
+  builder.addFieldInt8(0, +done, +false);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endInsertRes(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
+export class QueryRes {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {QueryRes}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):QueryRes {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {QueryRes=} obj
+ * @returns {QueryRes}
+ */
+static getRootAsQueryRes(bb:flatbuffers.ByteBuffer, obj?:QueryRes):QueryRes {
+  return (obj || new QueryRes).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
 /**
@@ -170,7 +393,7 @@ error(optionalEncoding?:any):string|Uint8Array|null {
 /**
  * @param {flatbuffers.Builder} builder
  */
-static startResponse(builder:flatbuffers.Builder) {
+static startQueryRes(builder:flatbuffers.Builder) {
   builder.startObject(3);
 };
 
@@ -223,7 +446,7 @@ static addError(builder:flatbuffers.Builder, errorOffset:flatbuffers.Offset) {
  * @param {flatbuffers.Builder} builder
  * @returns {flatbuffers.Offset}
  */
-static endResponse(builder:flatbuffers.Builder):flatbuffers.Offset {
+static endQueryRes(builder:flatbuffers.Builder):flatbuffers.Offset {
   var offset = builder.endObject();
   return offset;
 };

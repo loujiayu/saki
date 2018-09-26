@@ -5,7 +5,6 @@ import * as fbs from './msg_generated';
 import { invariant } from './utils/utils';
 
 export interface IQuery {
-  collection: string;
   selector?: Object | string;
   single?: boolean;
   limit?: number;
@@ -39,14 +38,7 @@ export class Collection {
   builder: flatbuffers.Builder;
   query: IQuery;
   
-  constructor(private sendRequest, private collection: string) {
-    // fbs.Query.addCollection(this.builder, this.builder.createString(collection));
-    // if (typeof collectionOrSelector === 'string')
-    //   this.query = {collection: collectionOrSelector};
-    // else {
-    //   this.query = collectionOrSelector;
-    // }
-  }
+  constructor(private sendRequest, private collection: string, private options: IQuery = {}) {}
 
   // insert(
   //   doc: Object,
@@ -56,6 +48,9 @@ export class Collection {
   //     doc && doc.constructor.name === 'Object',
   //     `insert arguments must be Object, got: ${doc}`
   //   );
+
+  //   const builder = new flatbuffers.Builder();
+    
 
   //   const req = Object.assign({}, this.query, { data: doc });
   //   if (options) {
@@ -115,10 +110,23 @@ export class Collection {
   // }
 
   fetch() {
+    const {limit, selector, single = false} = this.options;
     const builder = new flatbuffers.Builder();
     const coll = builder.createString(this.collection);
+
+    let selector_;
+    if (selector) {
+      selector_ = builder.createString(JSON.stringify(selector));
+    }
     fbs.Query.startQuery(builder);
     fbs.Query.addCollection(builder, coll);
+    fbs.Query.addSingle(builder, single);
+    if (limit) {
+      fbs.Query.addLimit(builder, limit);
+    }
+    if (selector) {
+      fbs.Query.addSelector(builder, selector_)
+    }
     const msg = fbs.Query.endQuery(builder);
 
     fbs.Base.startBase(builder);
@@ -127,11 +135,6 @@ export class Collection {
 
     const raw = this.sendRequest(builder);
     return raw;
-    // if (this.query.single) {
-    //   return raw;
-    // } else {
-    //   return raw.pipe(toArray());
-    // }
   }
 
   // watch() {
@@ -139,15 +142,15 @@ export class Collection {
   //   return raw;
   // }
 
-  // find(selector: string | Object): Collection {
-  //   return new Collection(this.sendRequest, {...this.query, selector});
-  // }
+  find(selector: string | Object): Collection {
+    return new Collection(this.sendRequest, this.collection, {...this.options, selector});
+  }
 
-  // findOne(selector: string | Object): Collection {
-  //   return new Collection(this.sendRequest, {...this.query, selector, single: true});
-  // }
+  findOne(selector: string | Object): Collection {
+    return new Collection(this.sendRequest, this.collection, {...this.options, selector, single: true});
+  }
 
-  // limit(count: number): Collection {
-  //   return new Collection(this.sendRequest, {...this.query, limit: count});
-  // }
+  limit(count: number): Collection {
+    return new Collection(this.sendRequest, this.collection, {...this.options, limit: count});
+  }
 }

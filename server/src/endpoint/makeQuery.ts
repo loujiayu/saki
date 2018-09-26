@@ -33,13 +33,19 @@ export function makeQuery(msg: fbs.Query, collections): r.Operation<any> {
   //   limit
   // } = rawRequest;
   const collection = msg.collection();
+  const single = msg.single();
+  const limit = single ? 1 : msg.limit();
+  let selector = msg.selector();
+  if (selector) {
+    selector = JSON.parse(selector);
+  }
 
   let query = collections.get(collection).table;
-  // if (selector) {
-  //   query = find(query, selector, collections.get(collection).indexes);
-  // }
-  // if (limit) {
-  //   query = query.limit(limit);
-  // }
+  if (selector) {
+    query = find(query, selector, collections.get(collection).indexes);
+  }
+  if (limit) {
+    query = query.limit(limit);
+  }
   return query;
 }
