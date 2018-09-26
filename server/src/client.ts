@@ -66,7 +66,6 @@ export default class Client {
     if (!this.isOpen()) return;
     const bb = new flatbuffers.ByteBuffer(data);
     const resBase = fbs.Base.getRootAsBase(bb);
-    console.log(resBase.requestId());
 
     try {
       this.socket.send(data);
@@ -89,18 +88,17 @@ export default class Client {
     
     this.auth.handshake(msg).then(res => {
       const builder = new flatbuffers.Builder();
-      fbs.AuthRes.startAuthRes(builder);
+      const error = builder.createString(res.error || '');
+      const token = builder.createString(res.token || '');
+      const user = builder.createString(res.user || '');
 
+      fbs.AuthRes.startAuthRes(builder);
       if (res.error) {
-        fbs.AuthRes.addError(builder, builder.createString(res.error));
+        fbs.AuthRes.addError(builder, error);
         this.createHandshakeHandler();
       } else {
-        if (res.token) {
-          fbs.AuthRes.addToken(builder, builder.createString(res.token));
-        }
-        if (res.user) {
-          fbs.AuthRes.addUsername(builder, builder.createString(res.user));
-        }
+        fbs.AuthRes.addToken(builder, token);
+        fbs.AuthRes.addUsername(builder, user);
         this.socket.on('message', this.handleRequestWrapper);
       }
       const msg = fbs.AuthRes.endAuthRes(builder);
@@ -113,8 +111,9 @@ export default class Client {
     }).catch((err: JsonWebTokenError) => {
       console.log(err);
       const builder = new flatbuffers.Builder();
+      const error = builder.createString(err.message)
       fbs.AuthRes.startAuthRes(builder);
-      fbs.AuthRes.addError(builder, builder.createString(err.message));
+      fbs.AuthRes.addError(builder, error);
       const msg = fbs.AuthRes.endAuthRes(builder);
       fbs.Base.startBase(builder);
       fbs.Base.addMsg(builder, msg);
@@ -166,38 +165,39 @@ export default class Client {
   }
 
   handleRequest(data) {
-    logger.log(`Received request from client: ${JSON.stringify(data)}}`);
-    const rawRequest: IRequest = this.parseRequest(data);
-    if (rawRequest.type === 'unsubscribe') {
-      this.removeRequest(rawRequest.requestId);
-      return;
-    } else if (rawRequest.type === 'keepalive') {
-      // this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
-      return;
-    } else if (rawRequest.type === 'logout') {
-      this.createHandshakeHandler();
-      this.removeRequest(rawRequest.requestId);
-      // this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
-      return;
-    }
-    if (!rawRequest.options) {
-      this.sendError(rawRequest.requestId, 'unvalid request');
-      return;
-    }
+    console.log(data);
+    // logger.log(`Received request from client: ${JSON.stringify(data)}}`);
+    // const rawRequest: IRequest = this.parseRequest(data);
+    // if (rawRequest.type === 'unsubscribe') {
+    //   this.removeRequest(rawRequest.requestId);
+    //   return;
+    // } else if (rawRequest.type === 'keepalive') {
+    //   // this.sendResponse(rawRequest.requestId, { type: 'keepalive' });
+    //   return;
+    // } else if (rawRequest.type === 'logout') {
+    //   this.createHandshakeHandler();
+    //   this.removeRequest(rawRequest.requestId);
+    //   // this.sendResponse(rawRequest.requestId, { type: 'logout', state: 'complete' });
+    //   return;
+    // }
+    // if (!rawRequest.options) {
+    //   this.sendError(rawRequest.requestId, 'unvalid request');
+    //   return;
+    // }
 
-    const endpoint = this.getRequestHandler(rawRequest);
-    if (!endpoint) {
-      this.sendError(rawRequest.requestId, 'unknown endpoint');
-      return;
-    }
-    const collection = rawRequest.options.collection;
-    if (!this.validate(endpoint.name, collection, rawRequest)) {
-      this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
-      return;
-    }
-    const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
-    this.requests.set(rawRequest.requestId, request);
-    return request.run();
+    // const endpoint = this.getRequestHandler(rawRequest);
+    // if (!endpoint) {
+    //   this.sendError(rawRequest.requestId, 'unknown endpoint');
+    //   return;
+    // }
+    // const collection = rawRequest.options.collection;
+    // if (!this.validate(endpoint.name, collection, rawRequest)) {
+    //   this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
+    //   return;
+    // }
+    // const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
+    // this.requests.set(rawRequest.requestId, request);
+    // return request.run();
   }
 
   isOpen() {

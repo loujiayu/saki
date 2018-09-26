@@ -50,9 +50,9 @@ export default class Saki {
 
   connect(authType): Subject<any> {
     this.account.setUp(authType);
-    const builder = new flatbuffers.Builder();
+    // const builder = new flatbuffers.Builder();
     // fbs.Base.startBase(builder);
-    return this.wsSubject.sendHandshake(builder);
+    return this.wsSubject.sendHandshake();
   }
 
   // login(userInfo): Subject<any> {

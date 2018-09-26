@@ -76,12 +76,15 @@ export class SakiSocket<T> extends Subject<T> {
     this.socket.next(data);
   }
 
-  sendHandshake(builder: flatbuffers.Builder): Subject<any> {
+  sendHandshake(): Subject<any> {
     if (!this.handshakeSub) {
+      const builder = new flatbuffers.Builder();
       const authOffset = this._handshakeMaker(builder);
+      const user = builder.createString(this.account.get(Saki_USER) || '');
       fbs.Base.startBase(builder);
       fbs.Base.addMsg(builder, authOffset);
       fbs.Base.addMsgType(builder, fbs.Any.Auth);
+      fbs.Base.addUser(builder, user);
 
       this.handshakeSub = this.requestObservable(builder)
         .subscribe({
@@ -104,7 +107,7 @@ export class SakiSocket<T> extends Subject<T> {
   }
 
   sendRequest(builder: flatbuffers.Builder): Observable<any> {
-    return this.sendHandshake(builder).pipe(
+    return this.sendHandshake().pipe(
       ignoreElements(),
       concat(this.requestObservable(builder)),
       concatMap((resp: Response) => {
@@ -129,9 +132,6 @@ export class SakiSocket<T> extends Subject<T> {
     return Observable.create((observer: Observer<any>) => {
       
       fbs.Base.addRequestId(builder, this.requestCounter++);
-      if (this.account.get(Saki_USER)) {
-        fbs.Base.addUser(builder, builder.createString(this.account.get(Saki_USER)));
-      }
       builder.finish(fbs.Base.endBase(builder));
 
       this.send(builder.asUint8Array());

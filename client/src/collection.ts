@@ -40,7 +40,6 @@ export class Collection {
   query: IQuery;
   
   constructor(private sendRequest, private collection: string) {
-    this.builder = new flatbuffers.Builder();
     // fbs.Query.addCollection(this.builder, this.builder.createString(collection));
     // if (typeof collectionOrSelector === 'string')
     //   this.query = {collection: collectionOrSelector};
@@ -116,15 +115,17 @@ export class Collection {
   // }
 
   fetch() {
-    fbs.Query.startQuery(this.builder);
-    fbs.Query.addCollection(this.builder, this.builder.createString(this.collection));
-    const msg = fbs.Query.endQuery(this.builder);
+    const builder = new flatbuffers.Builder();
+    const coll = builder.createString(this.collection);
+    fbs.Query.startQuery(builder);
+    fbs.Query.addCollection(builder, coll);
+    const msg = fbs.Query.endQuery(builder);
 
-    fbs.Base.startBase(this.builder);
-    fbs.Base.addMsg(this.builder, msg);
-    fbs.Base.addMsgType(this.builder, fbs.Any.Query);
+    fbs.Base.startBase(builder);
+    fbs.Base.addMsg(builder, msg);
+    fbs.Base.addMsgType(builder, fbs.Any.Query);
 
-    const raw = this.sendRequest(this.builder);
+    const raw = this.sendRequest(builder);
     return raw.pipe(toArray);
     // if (this.query.single) {
     //   return raw;
