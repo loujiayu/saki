@@ -1,6 +1,5 @@
 import { Subscription, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { flatbuffers } from 'flatbuffers';
 
 import { Collection } from './collection';
 import { Account } from './auth';
@@ -50,8 +49,6 @@ export default class Saki {
 
   connect(authType): Subject<any> {
     this.account.setUp(authType);
-    // const builder = new flatbuffers.Builder();
-    // fbs.Base.startBase(builder);
     return this.wsSubject.sendHandshake();
   }
 

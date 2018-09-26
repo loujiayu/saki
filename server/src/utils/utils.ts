@@ -18,6 +18,10 @@ export function arraysEqual(a, b) {
   return true;
 }
 
+export function stringToUint(str) {
+  
+}
+
 export function parseRules(
   rules: { [key: string]: IRule } | Array<string>
 ): { [key: string]: IRule } {

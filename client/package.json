@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/jest": "23.3.1",
     "@types/rx": "^4.1.1",
+    "@types/text-encoding": "^0.0.33",
     "eslint": "^4.11.0",
     "fs-extra": "^7.0.0",
     "jest": "23.4.2",
@@ -42,6 +43,7 @@
   },
   "dependencies": {
     "flatbuffers": "^1.9.0",
-    "rxjs": "^6.2.2"
+    "rxjs": "^6.2.2",
+    "text-encoding": "^0.6.4"
   }
 }

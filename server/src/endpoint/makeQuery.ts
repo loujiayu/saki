@@ -1,5 +1,6 @@
 import * as r from 'rethinkdb';
 import { compoundIndexGenerator, arraysEqual } from '../utils/utils';
+import * as fbs from '../msg_generated';
 
 function find(query, selector, indexes) {
   if (typeof selector === 'string') {
@@ -25,18 +26,20 @@ function find(query, selector, indexes) {
   }
 }
 
-export function makeQuery(rawRequest, collections): r.Operation<any> {
-  const {
-    collection,
-    selector,
-    limit
-  } = rawRequest;
+export function makeQuery(msg: fbs.Query, collections): r.Operation<any> {
+  // const {
+  //   collection,
+  //   selector,
+  //   limit
+  // } = rawRequest;
+  const collection = msg.collection();
+
   let query = collections.get(collection).table;
-  if (selector) {
-    query = find(query, selector, collections.get(collection).indexes);
-  }
-  if (limit) {
-    query = query.limit(limit);
-  }
+  // if (selector) {
+  //   query = find(query, selector, collections.get(collection).indexes);
+  // }
+  // if (limit) {
+  //   query = query.limit(limit);
+  // }
   return query;
 }

@@ -20,11 +20,16 @@
       //     console.log(val);
       //   }
       // })
-      // sk.collection('projects').fetch().subscribe(
-      //   val => {
-      //     console.log(val);
-      //   }
-      // )
+      sk.collection('projects').fetch().subscribe({
+        next: val => {
+          // console.log(Date());
+          console.log(val);
+        },
+        complete: () => {
+          console.log('object');
+        },
+
+      })
       // const ss = sk.collection('test');
       // ss.watch().subscribe(val => {
       //   console.log(val);

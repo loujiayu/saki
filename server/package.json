@@ -23,9 +23,11 @@
   "devDependencies": {
     "@types/bluebird": "^3.5.17",
     "@types/chalk": "^2.2.0",
+    "@types/flatbuffers": "^1.9.0",
     "@types/jest": "23.3.1",
     "@types/jsonwebtoken": "^7.2.3",
     "@types/rethinkdb": "^2.3.7",
+    "@types/text-encoding": "^0.0.33",
     "@types/ws": "^5.1.2",
     "eslint": "^4.9.0",
     "jest": "23.4.2",
@@ -34,13 +36,13 @@
     "typescript": "^2.8.3"
   },
   "dependencies": {
-    "@types/flatbuffers": "^1.9.0",
     "bluebird": "^3.5.1",
     "chalk": "^2.4.1",
     "flatbuffers": "^1.9.0",
     "jsonwebtoken": "^8.1.0",
     "redis": "^2.8.0",
     "rethinkdb": "^2.3.3",
+    "text-encoding": "^0.6.4",
     "ws": "^6.0.0"
   }
 }

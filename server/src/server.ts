@@ -6,22 +6,13 @@ import Request from './request';
 import Auth from './auth';
 import Client from './client';
 import Collection from './collection';
+import * as fbs from './msg_generated';
+
 import ReqlConnection from './reql_connection';
 import { invariant, parseRules } from './utils/utils';
 import { ensureTable, ensureIndex } from './utils/rethinkdbExtra';
-import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 import config from './config';
 import logger from './logger';
-
-const endpoints = {
-  query,
-  insert,
-  update,
-  remove,
-  replace,
-  upsert,
-  watch
-};
 
 export interface IRule {
   update: Function;
@@ -33,7 +24,6 @@ export interface IRule {
 
 export default class Server {
   path: string;
-  requestHandlers: Map<string, Function>;
   auth: Auth;
   opts;
   dbConnection: ReqlConnection;
@@ -49,7 +39,6 @@ export default class Server {
   constructor(httpServer, user_opts) {
     this.opts = Object.assign({}, user_opts, config);
     this.path = this.opts.path;
-    this.requestHandlers = new Map();
     this.httpServer = httpServer;
     this.wsServers = [];
     this.collections = new Map();
@@ -78,9 +67,6 @@ export default class Server {
       }
     } catch (error) {
       logger.error(error);
-    }
-    for (const key in endpoints) {
-      this.addRequestHandler(key, endpoints[key]);
     }
     this.addHttpListener();
     this.addWebsocket();
@@ -112,10 +98,6 @@ export default class Server {
       .on('connection', socket => {
         this.clients.add(new Client(socket, this));
       });
-  }
-
-  addRequestHandler(request_name, endpoint) {
-    this.requestHandlers.set(request_name, endpoint);
   }
 
   close() {

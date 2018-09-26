@@ -7,6 +7,7 @@ import Server from './server';
 import Request, { IRequest } from './request';
 import Auth from './auth';
 import logger from './logger';
+import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
 
 export interface IRule {
   update: Function;
@@ -17,7 +18,6 @@ export interface IRule {
 
 export default class Client {
   server: Server;
-  requestHandlers: Map<string, Function>;
   auth: Auth;
   rules: { [key: string]: IRule };
   requests: Map<number, Request>;
@@ -27,7 +27,6 @@ export default class Client {
     this.server = server;
     this.auth = server.auth;
     this.rules = server.rules;
-    this.requestHandlers = server.requestHandlers;
 
     this.requests = new Map();
     
@@ -64,9 +63,6 @@ export default class Client {
 
   sendResponse(data: Uint8Array) {
     if (!this.isOpen()) return;
-    const bb = new flatbuffers.ByteBuffer(data);
-    const resBase = fbs.Base.getRootAsBase(bb);
-
     try {
       this.socket.send(data);
     } catch (e) {
@@ -74,53 +70,73 @@ export default class Client {
     }
   }
 
+  sendAuthError(requestId: number, error: string) {
+    const builder = new flatbuffers.Builder();
+    const error_ = builder.createString(error)
+    fbs.AuthRes.startAuthRes(builder);
+    fbs.AuthRes.addError(builder, error_);
+    const msg = fbs.AuthRes.endAuthRes(builder);
+    fbs.Base.startBase(builder);
+    fbs.Base.addMsg(builder, msg);
+    fbs.Base.addMsgType(builder, fbs.Any.AuthRes);
+    fbs.Base.addRequestId(builder, requestId);
+    builder.finish(fbs.Base.endBase(builder));
+    
+    this.sendResponse(builder.asUint8Array());
+  }
+
   sendError(requestId: number, error: string) {
-    // this.sendResponse(requestId, { error });
+    const builder = new flatbuffers.Builder();
+    const error_ = builder.createString(error)
+    fbs.Response.startResponse(builder);
+    fbs.Response.addError(builder, error_);
+    const msg = fbs.Response.endResponse(builder);
+    fbs.Base.startBase(builder);
+    fbs.Base.addMsg(builder, msg);
+    fbs.Base.addMsgType(builder, fbs.Any.Response);
+    fbs.Base.addRequestId(builder, requestId);
+    builder.finish(fbs.Base.endBase(builder));
+    
+    this.sendResponse(builder.asUint8Array());
   }
 
   handleHandshake(data) {
     const u8 = new Uint8Array(data);
     const bb = new flatbuffers.ByteBuffer(u8);
-    const resBase = fbs.Base.getRootAsBase(bb);
+    const reqBase = fbs.Base.getRootAsBase(bb);
 
     const msg = new fbs.Auth();
-    resBase.msg(msg);
+    reqBase.msg(msg);
     
     this.auth.handshake(msg).then(res => {
       const builder = new flatbuffers.Builder();
-      const error = builder.createString(res.error || '');
-      const token = builder.createString(res.token || '');
-      const user = builder.createString(res.user || '');
+      const error = res.error && builder.createString(res.error);
+      const token = res.token && builder.createString(res.token);
+      const user = res.user && builder.createString(res.user);
 
       fbs.AuthRes.startAuthRes(builder);
       if (res.error) {
         fbs.AuthRes.addError(builder, error);
         this.createHandshakeHandler();
       } else {
-        fbs.AuthRes.addToken(builder, token);
-        fbs.AuthRes.addUsername(builder, user);
+        if (token) {
+          fbs.AuthRes.addToken(builder, token);
+        }
+        if (user) {
+          fbs.AuthRes.addUsername(builder, user);
+        }
         this.socket.on('message', this.handleRequestWrapper);
       }
       const msg = fbs.AuthRes.endAuthRes(builder);
       fbs.Base.startBase(builder);
       fbs.Base.addMsg(builder, msg);
       fbs.Base.addMsgType(builder, fbs.Any.AuthRes);
-      fbs.Base.addRequestId(builder, resBase.requestId());
+      fbs.Base.addRequestId(builder, reqBase.requestId());
       builder.finish(fbs.Base.endBase(builder));
       this.sendResponse(builder.asUint8Array());
     }).catch((err: JsonWebTokenError) => {
       console.log(err);
-      const builder = new flatbuffers.Builder();
-      const error = builder.createString(err.message)
-      fbs.AuthRes.startAuthRes(builder);
-      fbs.AuthRes.addError(builder, error);
-      const msg = fbs.AuthRes.endAuthRes(builder);
-      fbs.Base.startBase(builder);
-      fbs.Base.addMsg(builder, msg);
-      fbs.Base.addMsgType(builder, fbs.Any.AuthRes);
-      fbs.Base.addRequestId(builder, resBase.requestId());
-      builder.finish(fbs.Base.endBase(builder));
-      this.sendResponse(builder.asUint8Array());
+      this.sendAuthError(reqBase.requestId(), err.message);
       this.createHandshakeHandler();
     });
   }
@@ -129,8 +145,13 @@ export default class Client {
     this.errorWrapSocket(() => this.handleRequest(msg));
   }
 
-  getRequestHandler(request): Function {
-    return this.requestHandlers.get(request.type) as Function;
+  getRequestHandler(key): Function {
+    switch (key) {
+      case fbs.Any.Query:
+        return query;
+      default:
+        return () => {};
+    }
   }
 
   errorWrapSocket(cb) {
@@ -165,7 +186,9 @@ export default class Client {
   }
 
   handleRequest(data) {
-    console.log(data);
+    const u8 = new Uint8Array(data);
+    const bb = new flatbuffers.ByteBuffer(u8);
+    const reqBase = fbs.Base.getRootAsBase(bb);
     // logger.log(`Received request from client: ${JSON.stringify(data)}}`);
     // const rawRequest: IRequest = this.parseRequest(data);
     // if (rawRequest.type === 'unsubscribe') {
@@ -185,7 +208,7 @@ export default class Client {
     //   return;
     // }
 
-    // const endpoint = this.getRequestHandler(rawRequest);
+    const endpoint = this.getRequestHandler(reqBase.msgType());
     // if (!endpoint) {
     //   this.sendError(rawRequest.requestId, 'unknown endpoint');
     //   return;
@@ -195,9 +218,9 @@ export default class Client {
     //   this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
     //   return;
     // }
-    // const request: Request = new Request(rawRequest, endpoint, this, rawRequest.requestId);
-    // this.requests.set(rawRequest.requestId, request);
-    // return request.run();
+    const request: Request = new Request(reqBase, endpoint, this, reqBase.requestId());
+    this.requests.set(reqBase.requestId(), request);
+    return request.run();
   }
 
   isOpen() {

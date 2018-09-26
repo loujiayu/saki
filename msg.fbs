@@ -1,7 +1,8 @@
 union Any {
   Query,
   Auth,
-  AuthRes
+  AuthRes,
+  Response,
 }
 
 enum AuthType: byte {
@@ -13,6 +14,12 @@ enum AuthType: byte {
 
 table Query {
   collection: string;
+}
+
+table Response {
+  done: bool;
+  data: [ubyte];
+  error: string;
 }
 
 table Auth {

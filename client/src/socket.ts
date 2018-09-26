@@ -8,6 +8,7 @@ import {
   timer,
 } from 'rxjs';
 import { flatbuffers } from 'flatbuffers';
+import {TextDecoder} from 'text-encoding';
 import * as fbs from './msg_generated';
 import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter, mergeMap} from 'rxjs/operators';
 
@@ -80,11 +81,14 @@ export class SakiSocket<T> extends Subject<T> {
     if (!this.handshakeSub) {
       const builder = new flatbuffers.Builder();
       const authOffset = this._handshakeMaker(builder);
-      const user = builder.createString(this.account.get(Saki_USER) || '');
+      const user = this.account.get(Saki_USER) &&
+        builder.createString(this.account.get(Saki_USER));
       fbs.Base.startBase(builder);
       fbs.Base.addMsg(builder, authOffset);
       fbs.Base.addMsgType(builder, fbs.Any.Auth);
-      fbs.Base.addUser(builder, user);
+      if (user) {
+        fbs.Base.addUser(builder, user);
+      }
 
       this.handshakeSub = this.requestObservable(builder)
         .subscribe({
@@ -110,27 +114,25 @@ export class SakiSocket<T> extends Subject<T> {
     return this.sendHandshake().pipe(
       ignoreElements(),
       concat(this.requestObservable(builder)),
-      concatMap((resp: Response) => {
-        if (resp.error) {
-          throw new Error(resp.error);
+      concatMap((resp: fbs.Response) => {
+        if (resp.error()) {
+          throw new Error(resp.error()!);
         }
-        const data = resp.data || [];
-        if (resp.state) {
-          data.push({
-            type: 'state',
-            state: resp.state,
-          });
+        const decoder = new TextDecoder('utf-8');
+        const ab = decoder.decode(resp.dataArray()!);
+        const result = JSON.parse(ab);
+        if (Array.isArray(result)) {
+          return result;
+        } else {
+          return [JSON.parse(ab)];
         }
-        return data;
       }),
       share(),
-      takeWhile(resp => resp.state !== 'complete')
     );
   }
 
   requestObservable(builder: flatbuffers.Builder): Observable<any> {
     return Observable.create((observer: Observer<any>) => {
-      
       fbs.Base.addRequestId(builder, this.requestCounter++);
       builder.finish(fbs.Base.endBase(builder));
 
@@ -160,8 +162,16 @@ export class SakiSocket<T> extends Subject<T> {
           if (resp.msgType() === fbs.Any.AuthRes) {
             result = new fbs.AuthRes();
             resp.msg(result);
+            observer.next(result);
+          } else if (resp.msgType() === fbs.Any.Response) {
+            result = new fbs.Response();
+            resp.msg(result);
+            if (result.done()) {
+              observer.complete();
+            } else {
+              observer.next(result);
+            }
           }
-          observer.next(result);
         },
         err => {
           observer.error(err);

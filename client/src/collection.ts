@@ -126,7 +126,7 @@ export class Collection {
     fbs.Base.addMsgType(builder, fbs.Any.Query);
 
     const raw = this.sendRequest(builder);
-    return raw.pipe(toArray);
+    return raw;
     // if (this.query.single) {
     //   return raw;
     // } else {
