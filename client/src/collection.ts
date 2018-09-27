@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { toArray } from 'rxjs/operators';
+import { TextEncoder } from "text-encoding";
 import { flatbuffers } from 'flatbuffers';
 import * as fbs from './msg_generated';
 import { invariant } from './utils/utils';
@@ -10,8 +11,8 @@ export interface IQuery {
   limit?: number;
 }
 
-export function errorHandle(name: string, req: Object): Observable<any> {
-  const observable = this.sendRequest(name, req);
+export function errorHandle(builder: flatbuffers.Builder): Observable<any> {
+  const observable = this.sendRequest(builder);
   const handler = Observable.create(subscriber => {
     observable.subscribe(
       resp => {
@@ -40,24 +41,37 @@ export class Collection {
   
   constructor(private sendRequest, private collection: string, private options: IQuery = {}) {}
 
-  // insert(
-  //   doc: Object,
-  //   options?: Object,
-  // ): Observable<any> {
-  //   invariant(
-  //     doc && doc.constructor.name === 'Object',
-  //     `insert arguments must be Object, got: ${doc}`
-  //   );
+  insert(
+    doc: Object | Array<Object>,
+    options?: Object,
+  ): Observable<any> {
+    invariant(
+      doc && (doc.constructor.name === 'Object' || Array.isArray(doc)),
+      `insert arguments must be Object or Array, got: ${doc}`
+    );
 
-  //   const builder = new flatbuffers.Builder();
-    
+    const builder = new flatbuffers.Builder();
+    const encoder = new TextEncoder();
+    const docOffset = fbs.Insert.createDataVector(builder, encoder.encode(JSON.stringify(doc)))
+    const collection_ = builder.createString(this.collection);
+    let options_;
+    if (options) {
+      options_ = builder.createString(JSON.stringify(options));
+    }
+    fbs.Insert.startInsert(builder);
+    fbs.Insert.addData(builder, docOffset);
+    fbs.Insert.addCollection(builder, collection_);
+    if (options) {
+      fbs.Insert.addOptions(builder, options_);
+    }
+    const msg = fbs.Insert.endInsert(builder);
 
-  //   const req = Object.assign({}, this.query, { data: doc });
-  //   if (options) {
-  //     req['options'] = options;
-  //   }
-  //   return errorHandle.call(this, 'insert', req);
-  // }
+    fbs.Base.startBase(builder);
+    fbs.Base.addMsg(builder, msg);
+    fbs.Base.addMsgType(builder, fbs.Any.Insert);
+
+    return errorHandle.call(this, builder);
+  }
 
   // upsert(selector: Object, doc: Object) {
   //   invariant(
@@ -112,14 +126,14 @@ export class Collection {
   fetch() {
     const {limit, selector, single = false} = this.options;
     const builder = new flatbuffers.Builder();
-    const coll = builder.createString(this.collection);
+    const collection_ = builder.createString(this.collection);
 
     let selector_;
     if (selector) {
       selector_ = builder.createString(JSON.stringify(selector));
     }
     fbs.Query.startQuery(builder);
-    fbs.Query.addCollection(builder, coll);
+    fbs.Query.addCollection(builder, collection_);
     fbs.Query.addSingle(builder, single);
     if (limit) {
       fbs.Query.addLimit(builder, limit);
@@ -133,8 +147,7 @@ export class Collection {
     fbs.Base.addMsg(builder, msg);
     fbs.Base.addMsgType(builder, fbs.Any.Query);
 
-    const raw = this.sendRequest(builder);
-    return raw;
+    return this.sendRequest(builder);
   }
 
   // watch() {

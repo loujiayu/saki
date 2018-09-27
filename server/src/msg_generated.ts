@@ -202,10 +202,32 @@ dataArray():Uint8Array|null {
 };
 
 /**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+collection():string|null
+collection(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+collection(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
+ * @param {flatbuffers.Encoding=} optionalEncoding
+ * @returns {string|Uint8Array|null}
+ */
+options():string|null
+options(optionalEncoding:flatbuffers.Encoding):string|Uint8Array|null
+options(optionalEncoding?:any):string|Uint8Array|null {
+  var offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__string(this.bb_pos + offset, optionalEncoding) : null;
+};
+
+/**
  * @param {flatbuffers.Builder} builder
  */
 static startInsert(builder:flatbuffers.Builder) {
-  builder.startObject(1);
+  builder.startObject(3);
 };
 
 /**
@@ -235,6 +257,22 @@ static createDataVector(builder:flatbuffers.Builder, data:number[] | Uint8Array)
  */
 static startDataVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} collectionOffset
+ */
+static addCollection(builder:flatbuffers.Builder, collectionOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(1, collectionOffset, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} optionsOffset
+ */
+static addOptions(builder:flatbuffers.Builder, optionsOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, optionsOffset, 0);
 };
 
 /**

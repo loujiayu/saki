@@ -9,7 +9,6 @@
     <script src="/client/dist/client.js"></script>
     <script>
       // const sk = new Saki();
-
       const sk = new Saki();
       sk.connect('unauthenticated');
       // sk.collection('projes').fetch().subscribe({
@@ -20,13 +19,21 @@
       //     console.log(val);
       //   }
       // })
-      sk.collection('projects').find('devUser-21').fetch().subscribe({
+      // sk.collection('projects').find('devUser-21').fetch().subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('object');
+      //   },
+      // })
+      sk.collection('test').insert([{name: 'nnssa'}, {age: 293}]).subscribe({
         next: val => {
           console.log(val);
         },
         complete: () => {
-          console.log('object');
-        },
+          console.log('complete');
+        }
       })
       // const ss = sk.collection('test');
       // ss.watch().subscribe(val => {

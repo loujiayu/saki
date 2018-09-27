@@ -23,6 +23,8 @@ table Query {
 
 table Insert {
   data: [ubyte];
+  collection: string;
+  options: string;
 }
 
 table InsertRes {

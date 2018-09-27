@@ -145,12 +145,14 @@ export default class Client {
     this.errorWrapSocket(() => this.handleRequest(msg));
   }
 
-  getRequestHandler(key): Function {
+  getRequestHandler(key): Function | null {
     switch (key) {
       case fbs.Any.Query:
         return query;
+      case fbs.Any.Insert:
+        return insert;
       default:
-        return () => {};
+        return null;
     }
   }
 

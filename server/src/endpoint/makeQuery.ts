@@ -27,11 +27,6 @@ function find(query, selector, indexes) {
 }
 
 export function makeQuery(msg: fbs.Query, collections): r.Operation<any> {
-  // const {
-  //   collection,
-  //   selector,
-  //   limit
-  // } = rawRequest;
   const collection = msg.collection();
   const single = msg.single();
   const limit = single ? 1 : msg.limit();

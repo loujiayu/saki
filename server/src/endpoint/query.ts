@@ -17,7 +17,7 @@ export async function query(base: fbs.Base, collections, send, errorHandle, dbCo
         send({ data: result, done: true });
       }
     } else {
-      send({ data: [], done: true});
+      send({ done: true});
     }
   } catch (e) {
     errorHandle(e.message);
