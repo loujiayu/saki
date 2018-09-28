@@ -1,7 +1,10 @@
 import * as http from 'http';
 import * as r from 'rethinkdb';
 import * as websocket from 'ws';
+import { TextEncoder } from "text-encoding";
+import { flatbuffers } from 'flatbuffers';
 
+import * as fbs from '../src/msg_generated';
 import Client from '../src/client';
 import { cleanCache, getCache } from '../src/services/cache';
 import { compoundIndexGenerator } from '../src/utils/utils';
@@ -17,6 +20,133 @@ let conn;
 let server;
 let client;
 const rethinkTestTable = r.table('test');
+
+function createDataVector(
+  buffer,
+  builder: flatbuffers.Builder,
+  doc: Object | Array<Object>,
+): flatbuffers.Offset {
+  const encoder = new TextEncoder();
+  return buffer.createDataVector(builder, encoder.encode(JSON.stringify(doc)));
+}
+
+function createInsertBuffer(doc, options?) {
+  const builder = new flatbuffers.Builder();
+  const docOffset = createDataVector(fbs.Insert, builder, doc);
+  const collection_ = builder.createString('test');
+  let options_;
+  if (options) {
+    options_ = builder.createString(JSON.stringify(options));
+  }
+  fbs.Insert.startInsert(builder);
+  fbs.Insert.addData(builder, docOffset);
+  fbs.Insert.addCollection(builder, collection_);
+  if (options) {
+    fbs.Insert.addOptions(builder, options_);
+  }
+  const msg = fbs.Insert.endInsert(builder);
+
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Insert);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
+
+function createQueryBuffer(selector, limit?) {
+  const builder = new flatbuffers.Builder();
+  const collection_ = builder.createString('test');
+  let selector_;
+  if (selector) {
+    selector_ = builder.createString(JSON.stringify(selector));
+  }
+  fbs.Query.startQuery(builder);
+  fbs.Query.addCollection(builder, collection_);
+  if (limit) {
+    fbs.Query.addLimit(builder, limit);
+  }
+  if (selector) {
+    fbs.Query.addSelector(builder, selector_)
+  }
+  const msg = fbs.Query.endQuery(builder);
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Query);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
+
+function createRemoveBuffer(selector) {
+  const builder = new flatbuffers.Builder();
+  const collection_ = builder.createString('test');
+  let selector_;
+  if (selector) {
+    selector_ = builder.createString(JSON.stringify(selector));
+  }
+  fbs.Remove.startRemove(builder);
+  fbs.Remove.addCollection(builder, collection_);
+  if (selector) {
+    fbs.Remove.addSelector(builder, selector_)
+  }
+  const msg = fbs.Remove.endRemove(builder);
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Remove);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
+
+function createUpdateBuffer(selector, doc) {
+  const builder = new flatbuffers.Builder();
+  const collection_ = builder.createString('test');
+  const docOffset = createDataVector(fbs.Update, builder, doc);
+  const selector_ = builder.createString(JSON.stringify(selector));
+  fbs.Update.startUpdate(builder);
+  fbs.Update.addCollection(builder, collection_);
+  fbs.Update.addData(builder, docOffset);
+  fbs.Update.addSelector(builder, selector_);
+  const msg = fbs.Update.endUpdate(builder);
+
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Update);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
+
+function createUpsertBuffer(doc, selector) {
+  const builder = new flatbuffers.Builder();
+  const docOffset = createDataVector(fbs.Upsert, builder, doc);
+  const collection_ = builder.createString('test');
+  const selector_ = builder.createString(JSON.stringify(selector));
+  fbs.Upsert.startUpsert(builder);
+  fbs.Upsert.addCollection(builder, collection_);
+  fbs.Upsert.addData(builder, docOffset);
+  fbs.Upsert.addSelector(builder, selector_);
+  const msg = fbs.Upsert.endUpsert(builder);
+
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Upsert);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
+
+function createReplaceBuffer(doc) {
+  const builder = new flatbuffers.Builder();
+  const docOffset = createDataVector(fbs.Replace, builder, doc);
+  const collection_ = builder.createString('test');
+  fbs.Replace.startReplace(builder);
+  fbs.Replace.addCollection(builder, collection_);
+  fbs.Replace.addData(builder, docOffset);
+  const msg = fbs.Replace.endReplace(builder);
+
+  fbs.Base.startBase(builder);
+  fbs.Base.addMsg(builder, msg);
+  fbs.Base.addMsgType(builder, fbs.Any.Replace);
+  builder.finish(fbs.Base.endBase(builder));
+  return builder.asUint8Array();
+}
 
 beforeAll(() => {
   return SakiServer.createServer(http.createServer().listen(8000), {
@@ -44,10 +174,6 @@ afterAll(() => {
 });
 
 describe('invalid client request', () => {
-  const mockRequest = {
-    user: 'john',
-    options: { selector: 'selector' }
-  };
   let mockSendResponse;
   let mockSendError;
   beforeEach(() => {
@@ -57,22 +183,22 @@ describe('invalid client request', () => {
     client.__proto__.sendError = mockSendError;
   });
 
-  test('rule', () => {
-    expect(client.validate('update', 'test', mockRequest)).toBe(true);
-  });
-
   test('handle request unsubscribe', () => {
-    client.handleRequest({ type: 'unsubscribe' });
+    const builder = new flatbuffers.Builder();
+    fbs.Base.startBase(builder);
+    fbs.Base.addMsgType(builder, fbs.Any.Unsubscribe);
+    builder.finish(fbs.Base.endBase(builder));
+
+    client.handleRequest(builder.asUint8Array());
     expect(mockSendResponse).toHaveBeenCalledTimes(0);
   });
 
-  test('handle request unvalid request', () => {
-    client.handleRequest({ requestId: 0 });
-    expect(mockSendError).toBeCalledWith(0, 'unvalid request');
-  });
-
   test('handle request unknown endpoint', () => {
-    client.handleRequest(Object.assign({}, { requestId: 0, type: 'unknown' }, mockRequest));
+    const builder = new flatbuffers.Builder();
+    fbs.Base.startBase(builder);
+    builder.finish(fbs.Base.endBase(builder));
+
+    client.handleRequest(builder.asUint8Array());
     expect(mockSendError).toBeCalledWith(0, 'unknown endpoint');
   });
 });
@@ -90,47 +216,19 @@ describe('insert', () => {
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('insert one', done => {
-    client.handleRequest({
-      type: 'insert',
-      user: null,
-      options: { collection: 'test', data: { id: testID, name: 'john' } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].inserted).toBe(1);
-      done();
-    });
+  test('insert one', async () => {
+    await client.handleRequest(createInsertBuffer({ id: testID, name: 'john' }))
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
-  test('duplicate primary key', done => {
-    client.handleRequest({
-      type: 'insert',
-      user: null,
-      options: { collection: 'test', data: { id: testID } }
-    }).then(() => {
-      return client.handleRequest({
-        type: 'insert',
-        user: null,
-        options: { collection: 'test', data: { id: testID } }
-      });
-    }).then(() => {
-      expect(mockSendError).toHaveBeenCalledTimes(1);
-      done();
-    });
+  test('duplicate primary key', async () => {
+    await client.handleRequest(createInsertBuffer({ id: testID }));
+    await client.handleRequest(createInsertBuffer({ id: testID }));
+    expect(mockSendError).toHaveBeenCalledTimes(1);
   });
-  test('insert optinos', done => {
-    client.handleRequest({
-      type: 'insert',
-      user: null,
-      options: { collection: 'test', data: { id: testID, name: 'john' } }
-    }).then(() => {
-      return client.handleRequest({
-        type: 'insert',
-        user: null,
-        options: { collection: 'test', data: { id: testID, name: 'andi' }, options: { conflict: 'replace' } }
-      });
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[1][1].data[0].replaced).toBe(1);
-      done();
-    });
+  test('insert optinos', async () => {
+    await client.handleRequest(createInsertBuffer({ id: testID, name: 'john' }));
+    await client.handleRequest(createInsertBuffer({ id: testID, name: 'andi' }, { conflict: 'replace' }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -153,45 +251,17 @@ describe('read', () => {
     server.useCache = true;
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('find', done => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: 'test', selector: testID }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
-      done();
-    });
+  test('find', async () => {
+    await client.handleRequest(createQueryBuffer(testID));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
-  test('find with filter', done => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: 'test', selector: { name: 'john' } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
-      done();
-    });
+  test('find with filter', async () => {
+    await client.handleRequest(createQueryBuffer({ name: 'john' }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(2);
   });
-  test('query with wrong id', done => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: 'test', selector: 'wrong-id' }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data).toHaveLength(0);
-      done();
-    });
-  });
-  test('query', done => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: 'test' }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].id).toBe(testID);
-      done();
-    });
+  test('query with wrong id', async () => {
+    await client.handleRequest(createQueryBuffer('wrong-id'));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -220,15 +290,9 @@ describe('transformations', () => {
     server.useCache = true;
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('limit', done => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: 'test', limit: 2 }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls).toHaveLength(3);
-      done();
-    });
+  test('limit', async () => {
+    await client.handleRequest(createQueryBuffer(null, 2));
+    expect(mockSendResponse.mock.calls).toHaveLength(3);
   });
 });
 
@@ -249,25 +313,13 @@ describe('remove', () => {
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('remove by id', done => {
-    client.handleRequest({
-      type: 'remove',
-      user: null,
-      options: { collection: 'test', selector: testID }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].deleted).toBe(1);
-      done();
-    });
+  test('remove by id', async () => {
+    await client.handleRequest(createRemoveBuffer(testID));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
-  test('remove by filter', done => {
-    client.handleRequest({
-      type: 'remove',
-      user: null,
-      options: { collection: 'test', selector: { name: 'john-remove' } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].deleted).toBe(1);
-      done();
-    });
+  test('remove by filter', async () => {
+    await client.handleRequest(createRemoveBuffer({ name: 'john-remove' }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -288,25 +340,13 @@ describe('update', () => {
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('update with id', done => {
-    client.handleRequest({
-      type: 'update',
-      user: null,
-      options: { collection: 'test', selector: testID, data: { class: { name: 'esan' } } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
-      done();
-    });
+  test('update with id', async () => {
+    await client.handleRequest(createUpdateBuffer(testID, { class: { name: 'esan' } }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
-  test('update with filter', done => {
-    client.handleRequest({
-      type: 'update',
-      user: null,
-      options: { collection: 'test', selector: { class: { name: 'john' } }, data: { class: { name: 'esan' } } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
-      done();
-    });
+  test('update with filter', async () => {
+    await client.handleRequest(createUpdateBuffer({ class: { name: 'john' } }, { class: { name: 'esan' } }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -332,29 +372,17 @@ describe('upsert', () => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn)
       .then(() => (rethinkTestTable.get(testID2) as any).delete());
   });
-  test('upsert without id error', done => {
-    client.handleRequest({
-      type: 'upsert',
-      user: null,
-      options: { collection: 'test', selector: testID + 'errorid', data: { name: 'pappm' } }
-    }).then(() => {
-      expect(mockSendError).toHaveBeenCalledTimes(1);
-      done();
-    });
+  test('upsert without id error', async () => {
+    await client.handleRequest(createUpsertBuffer({name: 'pappm'}, testID + 'errorid'));
+    expect(mockSendError).toHaveBeenCalledTimes(1);
   });
-  test('update matching doc', done => {
-    client.handleRequest({
-      type: 'upsert',
-      user: null,
-      options: { collection: 'test', selector: { name: 'john-update' }, data: { name: 'tom', age: 20 } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
-      done();
-    });
+  test('update matching doc', async () => {
+    await client.handleRequest(createUpsertBuffer({ name: 'tom', age: 20 }, { name: 'john-update' }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('replace', () => {
+describe.only('replace', () => {
   let testID = 'replace-test-id';
   let mockSendResponse;
   let mockSendError;
@@ -371,15 +399,9 @@ describe('replace', () => {
   afterEach(() => {
     return (rethinkTestTable.get(testID) as any).delete().run(conn);
   });
-  test('replace', done => {
-    client.handleRequest({
-      type: 'replace',
-      user: null,
-      options: { collection: 'test', data: { id: testID, class: { name: 'bob' } } }
-    }).then(() => {
-      expect(mockSendResponse.mock.calls[0][1].data[0].replaced).toBe(1);
-      done();
-    });
+  test('replace', async () => {
+    await client.handleRequest(createReplaceBuffer({ id: testID, class: { name: 'bob' } }));
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
   });
 });
 

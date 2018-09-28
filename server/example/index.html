@@ -11,14 +11,14 @@
       // const sk = new Saki();
       const sk = new Saki();
       sk.connect('unauthenticated');
-      // sk.collection('projes').fetch().subscribe({
-      //   error: err => {
-      //     console.log(err);
-      //   },
-      //   next: val => {
-      //     console.log(val);
-      //   }
-      // })
+      sk.collection('projes').fetch().subscribe({
+        error: err => {
+          console.log(err);
+        },
+        next: val => {
+          console.log(val);
+        }
+      })
       // sk.collection('projects').find('devUser-21').fetch().subscribe({
       //   next: val => {
       //     console.log(val);
@@ -27,15 +27,15 @@
       //     console.log('object');
       //   },
       // })
-      const observable = sk.collection('test').insert({id: 'test-insuesssrt'});
-      observable.subscribe({
-        next: val => {
-          console.log(val);
-        },
-        complete: () => {
-          console.log('complete');
-        }
-      })
+      // const observable = sk.collection('test').insert({id: 'test-insuesssrt'});
+      // observable.subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('complete');
+      //   }
+      // })
       // observable.subscribe({
       //   next: val => {
       //     console.log(val);

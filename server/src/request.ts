@@ -130,7 +130,8 @@ export default class Request {
         this.client.server.collections,
         res => this.sendData(res),
         (error: string) => this.client.sendError(this.id, error),
-        this.client.server.dbConnection
+        this.client.server.dbConnection,
+        (base, collection) => this.client.validate(base, collection)
       );
       return this.dispose;
     } catch (e) {

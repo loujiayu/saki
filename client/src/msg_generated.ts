@@ -15,7 +15,8 @@ export enum Any{
   Remove= 8,
   Response= 9,
   Watch= 10,
-  Unsubscribe= 11
+  Unsubscribe= 11,
+  Keepalive= 12
 };
 
 /**
@@ -1284,6 +1285,56 @@ static addError(builder:flatbuffers.Builder, errorOffset:flatbuffers.Offset) {
  * @returns {flatbuffers.Offset}
  */
 static endAuthRes(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
+export class Keepalive {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {Keepalive}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):Keepalive {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {Keepalive=} obj
+ * @returns {Keepalive}
+ */
+static getRootAsKeepalive(bb:flatbuffers.ByteBuffer, obj?:Keepalive):Keepalive {
+  return (obj || new Keepalive).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startKeepalive(builder:flatbuffers.Builder) {
+  builder.startObject(0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endKeepalive(builder:flatbuffers.Builder):flatbuffers.Offset {
   var offset = builder.endObject();
   return offset;
 };

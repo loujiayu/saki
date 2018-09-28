@@ -2,11 +2,23 @@ import * as r from 'rethinkdb';
 import * as fbs from '../msg_generated';
 import { decodeToJSObj } from '../utils/utils';
 
-export async function insert(base: fbs.Base, collections, send, errorHandle, dbConnection) {
+export async function insert(
+  base: fbs.Base,
+  collections,
+  send,
+  errorHandle,
+  dbConnection,
+  validate
+) {
   try {
     const msg = new fbs.Insert();
     base.msg(msg);
     const collection = msg.collection();
+
+    const valid = validate(base, collection);
+    if (!valid)
+      return errorHandle(`insert in table ${collection} is not allowed`);
+
     const data = decodeToJSObj(msg);
 
     let options = msg.options();

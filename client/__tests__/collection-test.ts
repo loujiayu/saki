@@ -29,9 +29,6 @@ afterAll(() => {
 });
 
 describe('auth', () => {
-  // afterEach(done => {
-  //   sk.logout().subscribe({complete: () => done()});
-  // });
   test('unauthenticated', done => {
     sk.connect('unauthenticated').subscribe((resp: fbs.AuthRes) => {
       expect(resp instanceof fbs.AuthRes).toBeTruthy();

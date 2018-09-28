@@ -6,7 +6,6 @@ import Request from './request';
 import Auth from './auth';
 import Client from './client';
 import Collection from './collection';
-import * as fbs from './msg_generated';
 
 import ReqlConnection from './reql_connection';
 import { invariant, parseRules } from './utils/utils';

@@ -149,7 +149,7 @@ export class Collection {
     fbs.Update.startUpdate(builder);
     fbs.Update.addCollection(builder, collection_);
     fbs.Update.addData(builder, docOffset);
-    fbs.Upsert.addSelector(builder, selector_);
+    fbs.Update.addSelector(builder, selector_);
     const msg = fbs.Update.endUpdate(builder);
 
     fbs.Base.startBase(builder);
@@ -170,7 +170,7 @@ export class Collection {
     fbs.Remove.startRemove(builder);
     fbs.Remove.addCollection(builder, collection_);
     if (selector) {
-      fbs.Remove.addSelector(builder, selector_)
+      fbs.Remove.addSelector(builder, selector_);
     }
     const msg = fbs.Remove.endRemove(builder);
     fbs.Base.startBase(builder);

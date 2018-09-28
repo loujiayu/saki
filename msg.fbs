@@ -9,7 +9,8 @@ union Any {
   Remove,
   Response,
   Watch,
-  Unsubscribe
+  Unsubscribe,
+  Keepalive
 }
 
 enum AuthType: byte {
@@ -80,6 +81,8 @@ table AuthRes {
   token: string;
   error: string;
 }
+
+table Keepalive {}
 
 table Base {
   msg: Any;

@@ -2,11 +2,23 @@ import * as r from 'rethinkdb';
 import * as fbs from '../msg_generated';
 import { decodeToJSObj } from '../utils/utils';
 
-export async function update(base: fbs.Base, collections, send, errorHandle, dbConnection) {
+export async function update(
+  base: fbs.Base,
+  collections,
+  send,
+  errorHandle,
+  dbConnection,
+  validate
+) {
   try {
     const msg = new fbs.Update();
     base.msg(msg);
     const collection = msg.collection();
+
+    const valid = validate(base, collection);
+    if (!valid)
+      return errorHandle(`update in table ${collection} is not allowed`);
+
     const selector = JSON.parse(msg.selector()!);
     const data = decodeToJSObj(msg);
 

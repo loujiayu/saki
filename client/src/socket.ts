@@ -45,12 +45,19 @@ export class SakiSocket<T> extends Subject<T> {
       }
     };
 
-    // this.keepalive = timer(1000 * keepalive, 1000 * keepalive)
-    //   .pipe(
-    //     map(() => this.requestObservable({type: 'keepalive'})),
-    //     publish()
-    //   );
-    // this.keepalive.subscribe();
+    this.keepalive = timer(1000 * keepalive, 1000 * keepalive)
+      .pipe(
+        map(() => {
+          const builder = new flatbuffers.Builder();
+          fbs.Keepalive.startKeepalive(builder);
+          const msg = fbs.Keepalive.endKeepalive(builder);
+          fbs.Base.startBase(builder);
+          fbs.Base.addMsg(builder, msg);
+          fbs.Base.addMsgType(builder, fbs.Any.Keepalive);
+          return this.requestObservable(builder).subscribe();
+        }),
+        publish()
+      )
 
     this.account = account;
     this.requestCounter = 0;
@@ -99,7 +106,7 @@ export class SakiSocket<T> extends Subject<T> {
             console.log(err);
           }}
         );
-      // this.handshakeSub.add((this.keepalive as any).connect());
+      this.handshakeSub.add((this.keepalive as any).connect());
     }
     return this.handshake;
   }
@@ -161,6 +168,7 @@ export class SakiSocket<T> extends Subject<T> {
       ).subscribe(
         (resp: fbs.Base) => {
           let result;
+          // TODO: keepalive
           if (resp.msgType() === fbs.Any.AuthRes) {
             result = new fbs.AuthRes();
             resp.msg(result);

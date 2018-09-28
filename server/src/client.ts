@@ -173,36 +173,38 @@ export default class Client {
     }
   }
 
-  validate(operation: string, collection: string, rawRequest: IRequest): boolean {
+  validate(base: fbs.Base, collection: string): boolean {
     const rule = this.rules[collection];
-    if (!rule) return false;
-    if (!rawRequest.options) return false;
 
-    const { user, options: { selector, data } } = rawRequest;
-    switch (operation) {
-      case 'update':
-      case 'upsert':
-        return rule.update(user, selector, data);
-      case 'insert':
-      case 'replace':
-        return rule.insert(user, data);
-      case 'query':
-      case 'watch':
-        return rule.fetch(user, selector);
-      case 'remove':
-        return rule.remove(user, selector);
+    if (!rule) return false;
+    const user = base.user();
+
+    switch (base.msgType()) {
+      case fbs.Any.Update:
+      case fbs.Any.Upsert:
+        return rule.update(user);
+      case fbs.Any.Insert:
+      case fbs.Any.Replace:
+        return rule.insert(user);
+      case fbs.Any.Query:
+      case fbs.Any.Watch:
+        return rule.fetch(user);
+      case fbs.Any.Remove:
+        return rule.remove(user);
       default:
         return false;
     }
   }
 
-  handleRequest(data) {
+  async handleRequest(data) {
     const u8 = new Uint8Array(data);
     const bb = new flatbuffers.ByteBuffer(u8);
     const reqBase = fbs.Base.getRootAsBase(bb);
-
     if (reqBase.msgType() === fbs.Any.Unsubscribe) {
       return this.removeRequest(reqBase.requestId());
+    }
+    if (reqBase.msgType() === fbs.Any.Keepalive) {
+      return this.sendResponse(u8);
     }
     // logger.log(`Received request from client: ${JSON.stringify(data)}}`);
     // const rawRequest: IRequest = this.parseRequest(data);
@@ -228,14 +230,10 @@ export default class Client {
       this.sendError(reqBase.requestId(), 'unknown endpoint');
       return;
     }
-    // const collection = rawRequest.options.collection;
-    // if (!this.validate(endpoint.name, collection, rawRequest)) {
-    //   this.sendError(rawRequest.requestId, `${endpoint.name} in table ${collection} is not allowed`);
-    //   return;
-    // }
+    
     const request: Request = new Request(reqBase, endpoint, this, reqBase.requestId());
     this.requests.set(reqBase.requestId(), request);
-    return request.run();
+    return await request.run();
   }
 
   isOpen() {
