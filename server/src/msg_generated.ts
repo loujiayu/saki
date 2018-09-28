@@ -14,7 +14,8 @@ export enum Any{
   Update= 7,
   Remove= 8,
   Response= 9,
-  Watch= 10
+  Watch= 10,
+  Unsubscribe= 11
 };
 
 /**
@@ -142,6 +143,72 @@ static addSingle(builder:flatbuffers.Builder, single:boolean) {
  * @returns {flatbuffers.Offset}
  */
 static endQuery(builder:flatbuffers.Builder):flatbuffers.Offset {
+  var offset = builder.endObject();
+  return offset;
+};
+
+}
+/**
+ * @constructor
+ */
+export class Unsubscribe {
+  /**
+   * @type {flatbuffers.ByteBuffer}
+   */
+  bb: flatbuffers.ByteBuffer|null = null;
+
+  /**
+   * @type {number}
+   */
+  bb_pos:number = 0;
+/**
+ * @param {number} i
+ * @param {flatbuffers.ByteBuffer} bb
+ * @returns {Unsubscribe}
+ */
+__init(i:number, bb:flatbuffers.ByteBuffer):Unsubscribe {
+  this.bb_pos = i;
+  this.bb = bb;
+  return this;
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {Unsubscribe=} obj
+ * @returns {Unsubscribe}
+ */
+static getRootAsUnsubscribe(bb:flatbuffers.ByteBuffer, obj?:Unsubscribe):Unsubscribe {
+  return (obj || new Unsubscribe).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @returns {number}
+ */
+requestId():number {
+  var offset = this.bb!.__offset(this.bb_pos, 4);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ */
+static startUnsubscribe(builder:flatbuffers.Builder) {
+  builder.startObject(1);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {number} requestId
+ */
+static addRequestId(builder:flatbuffers.Builder, requestId:number) {
+  builder.addFieldInt32(0, requestId, 0);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @returns {flatbuffers.Offset}
+ */
+static endUnsubscribe(builder:flatbuffers.Builder):flatbuffers.Offset {
   var offset = builder.endObject();
   return offset;
 };

@@ -27,6 +27,23 @@
       //     console.log('object');
       //   },
       // })
+      const observable = sk.collection('test').insert({id: 'test-insuesssrt'});
+      observable.subscribe({
+        next: val => {
+          console.log(val);
+        },
+        complete: () => {
+          console.log('complete');
+        }
+      })
+      // observable.subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('complete');
+      //   }
+      // })
       // sk.collection('test').insert([{name: 'nnssa'}, {age: 293}]).subscribe({
       //   next: val => {
       //     console.log(val);
@@ -43,14 +60,16 @@
       //     console.log('complete');
       //   }
       // })
-      const handler = sk.collection('test').watch().subscribe({
-        next: val => {
-          console.log(val);
-        },
-        complete: () => {
-          console.log('complete');
-        }
-      })
+      // const handler = sk.collection('test').watch().subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('complete');
+      //   }
+      // })
+      // handler.unsubscribe();
+      // console.log(handler);
       // const ss = sk.collection('test');
       // ss.watch().subscribe(val => {
       //   console.log(val);

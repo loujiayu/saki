@@ -17,8 +17,6 @@ export async function watch(base: fbs.Base, collections, send, errorHandle, dbCo
     }).run(conn);
     (res as any).eachAsync(item => {
       send({data: [item]})
-    }).then(() => {
-      send({done: true});
     })
     return () => {
       if (res) {

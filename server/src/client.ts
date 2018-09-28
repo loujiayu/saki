@@ -104,7 +104,6 @@ export default class Client {
     const u8 = new Uint8Array(data);
     const bb = new flatbuffers.ByteBuffer(u8);
     const reqBase = fbs.Base.getRootAsBase(bb);
-
     const msg = new fbs.Auth();
     reqBase.msg(msg);
     
@@ -201,6 +200,10 @@ export default class Client {
     const u8 = new Uint8Array(data);
     const bb = new flatbuffers.ByteBuffer(u8);
     const reqBase = fbs.Base.getRootAsBase(bb);
+
+    if (reqBase.msgType() === fbs.Any.Unsubscribe) {
+      return this.removeRequest(reqBase.requestId());
+    }
     // logger.log(`Received request from client: ${JSON.stringify(data)}}`);
     // const rawRequest: IRequest = this.parseRequest(data);
     // if (rawRequest.type === 'unsubscribe') {

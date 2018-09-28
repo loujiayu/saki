@@ -9,6 +9,7 @@ union Any {
   Remove,
   Response,
   Watch,
+  Unsubscribe
 }
 
 enum AuthType: byte {
@@ -23,6 +24,10 @@ table Query {
   limit: int;
   selector: string;
   single: bool;
+}
+
+table Unsubscribe {
+  request_id: uint32;
 }
 
 table Watch {

@@ -10,7 +10,7 @@ import {
 import { flatbuffers } from 'flatbuffers';
 import {TextDecoder} from 'text-encoding';
 import * as fbs from './msg_generated';
-import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter, mergeMap} from 'rxjs/operators';
+import {map, publish, ignoreElements, concat, concatMap, share, takeWhile, filter, mergeMap, buffer} from 'rxjs/operators';
 
 import { Account } from './auth';
 import { Saki_USER } from './utils/utils';
@@ -138,15 +138,23 @@ export class SakiSocket<T> extends Subject<T> {
       const subscription = this.socket.pipe(
         mergeMap(
           resp => new Promise((resolve, reject) => {
-            const fileReader = new FileReader();
-            fileReader.onload = (event: ProgressEvent) => {
-              const ab = (event as any).target.result;
-              const u8 = new Uint8Array(ab);
-              const bb = new flatbuffers.ByteBuffer(u8);
+            if (typeof Blob === 'function' && resp instanceof Blob) {
+              // browser
+              const fileReader = new FileReader();
+              fileReader.onload = (event: ProgressEvent) => {
+                const ab = (event as any).target.result;
+                const u8 = new Uint8Array(ab);
+                const bb = new flatbuffers.ByteBuffer(u8);
+                const resBase = fbs.Base.getRootAsBase(bb);
+                resolve(resBase);
+              }
+              fileReader.readAsArrayBuffer(resp);
+            } else if (typeof Buffer === 'function' && resp instanceof Buffer) {
+              // node
+              const bb = new flatbuffers.ByteBuffer(resp);
               const resBase = fbs.Base.getRootAsBase(bb);
               resolve(resBase);
             }
-            fileReader.readAsArrayBuffer(resp);
           }),
         ),
         filter((resp: fbs.Base) => resp.requestId() === base.requestId())
@@ -176,7 +184,15 @@ export class SakiSocket<T> extends Subject<T> {
       );
       return () => {
         if (base.msgType() !== fbs.Any.Auth) {
-          // this.send({requestId: request.requestId, type: 'unsubscribe'});
+          const builder = new flatbuffers.Builder();
+          fbs.Unsubscribe.startUnsubscribe(builder);
+          fbs.Unsubscribe.addRequestId(builder, base.requestId());
+          const msg = fbs.Unsubscribe.endUnsubscribe(builder);
+          fbs.Base.startBase(builder);
+          fbs.Base.addMsg(builder, msg);
+          fbs.Base.addMsgType(builder, fbs.Any.Unsubscribe);
+          builder.finish(fbs.Base.endBase(builder));
+          this.send(builder.asUint8Array());
         }
         subscription.unsubscribe();
       };

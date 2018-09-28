@@ -1,6 +1,7 @@
 import * as http from 'http';
 
 import Saki from '../src/index';
+import * as fbs from '../src/msg_generated';
 
 const SakiServer = require('../../server/src/saki');
 
@@ -14,15 +15,13 @@ const db = {
 let server;
 const sk = new Saki();
 
-beforeAll(() => {
-  return SakiServer.createServer(http.createServer().listen(8000), {
+beforeAll(async () => {
+  server = await SakiServer.createServer(http.createServer().listen(8000), {
     projectName: db.name,
     rdbPort: db.port,
     rdbHost: db.host,
     rules: ['test']
-  }).then(s => {
-    server = s;
-  });
+  })
 });
 
 afterAll(() => {
@@ -30,12 +29,12 @@ afterAll(() => {
 });
 
 describe('auth', () => {
-  afterEach(done => {
-    sk.logout().subscribe({complete: () => done()});
-  });
+  // afterEach(done => {
+  //   sk.logout().subscribe({complete: () => done()});
+  // });
   test('unauthenticated', done => {
-    sk.connect('unauthenticated').subscribe(resp => {
-      expect(resp).toEqual({method: 'unauthenticated', requestId: 0});
+    sk.connect('unauthenticated').subscribe((resp: fbs.AuthRes) => {
+      expect(resp instanceof fbs.AuthRes).toBeTruthy();
       done();
     });
   });

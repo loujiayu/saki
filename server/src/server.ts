@@ -66,7 +66,7 @@ export default class Server {
         await this.createIndex(rule, collection, conn);
       }
     } catch (error) {
-      logger.error(error);
+      console.log(error);
     }
     this.addHttpListener();
     this.addWebsocket();

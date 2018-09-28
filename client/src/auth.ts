@@ -58,7 +58,6 @@ export class Account {
     fbs.Auth.startAuth(builder);
     if (this.authType === 'unauthenticated') {
       fbs.Auth.addType(builder, fbs.AuthType.unauthenticated);
-      // return { method: this.authType };
     }
     return fbs.Auth.endAuth(builder);
     // fbs.Base.addMsg(builder, fbs.Auth.endAuth(builder));

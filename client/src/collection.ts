@@ -12,27 +12,27 @@ export interface IQuery {
 }
 
 export function errorHandle(builder: flatbuffers.Builder): Observable<any> {
-  const observable = this.sendRequest(builder);
-  const handler = Observable.create(subscriber => {
-    observable.subscribe(
-      resp => {
-        if (resp.error) {
-          subscriber.error(new Error(resp.error));
-        } else {
-          subscriber.next(resp);
-        }
-      },
-      err => {
-        subscriber.error(err);
-      },
-      resp => subscriber.complete(resp)
-    );
-  });
-  const sub = handler.subscribe({
-    error: () => {}
-  });
+  return this.sendRequest(builder);
+  // const handler = Observable.create(subscriber => {
+  //   observable.subscribe(
+  //     resp => {
+  //       if (resp.error()) {
+  //         subscriber.error(new Error(resp.error()));
+  //       } else {
+  //         subscriber.next(resp);
+  //       }
+  //     },
+  //     err => {
+  //       subscriber.error(err);
+  //     },
+  //     resp => subscriber.complete(resp)
+  //   );
+  // });
+  // const sub = handler.subscribe({
+  //   error: () => {}
+  // });
 
-  return handler;
+  // return handler;
 }
 
 function createDataVector(
