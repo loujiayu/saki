@@ -1,4 +1,5 @@
 import { IRule } from '../server';
+import { TextDecoder } from 'text-encoding';
 
 export const indexSeparator = '_saki_index_separator_';
 
@@ -18,8 +19,10 @@ export function arraysEqual(a, b) {
   return true;
 }
 
-export function stringToUint(str) {
-  
+export function decodeToJSObj(msg) {
+  const decoder = new TextDecoder('utf-8');
+  const ab = decoder.decode(msg.dataArray()!);
+  return JSON.parse(ab);
 }
 
 export function parseRules(

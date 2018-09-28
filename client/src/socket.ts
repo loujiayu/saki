@@ -108,7 +108,7 @@ export class SakiSocket<T> extends Subject<T> {
     return this.sendHandshake().pipe(
       ignoreElements(),
       concat(this.requestObservable(builder)),
-      concatMap((resp: fbs.QueryRes) => {
+      concatMap((resp: fbs.Response) => {
         if (resp.error()) {
           throw new Error(resp.error()!);
         }
@@ -157,8 +157,8 @@ export class SakiSocket<T> extends Subject<T> {
             result = new fbs.AuthRes();
             resp.msg(result);
             observer.next(result);
-          } else if (resp.msgType() === fbs.Any.QueryRes) {
-            result = new fbs.QueryRes();
+          } else if (resp.msgType() === fbs.Any.Response) {
+            result = new fbs.Response();
             resp.msg(result);
             if (result.done()) {
               if (result.dataArray()) {
@@ -175,7 +175,7 @@ export class SakiSocket<T> extends Subject<T> {
         }
       );
       return () => {
-        if (!base.msgType()) {
+        if (base.msgType() !== fbs.Any.Auth) {
           // this.send({requestId: request.requestId, type: 'unsubscribe'});
         }
         subscription.unsubscribe();

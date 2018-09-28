@@ -27,7 +27,23 @@
       //     console.log('object');
       //   },
       // })
-      sk.collection('test').insert([{name: 'nnssa'}, {age: 293}]).subscribe({
+      // sk.collection('test').insert([{name: 'nnssa'}, {age: 293}]).subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('complete');
+      //   }
+      // })
+      // sk.collection('test').update({id: '66ecb331-9a65-4758-a833-f3e587c23c57'}, {command: 'update'}).subscribe({
+      //   next: val => {
+      //     console.log(val);
+      //   },
+      //   complete: () => {
+      //     console.log('complete');
+      //   }
+      // })
+      const handler = sk.collection('test').watch().subscribe({
         next: val => {
           console.log(val);
         },

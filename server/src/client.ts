@@ -88,12 +88,12 @@ export default class Client {
   sendError(requestId: number, error: string) {
     const builder = new flatbuffers.Builder();
     const error_ = builder.createString(error)
-    fbs.QueryRes.startQueryRes(builder);
-    fbs.QueryRes.addError(builder, error_);
-    const msg = fbs.QueryRes.endQueryRes(builder);
+    fbs.Response.startResponse(builder);
+    fbs.Response.addError(builder, error_);
+    const msg = fbs.Response.endResponse(builder);
     fbs.Base.startBase(builder);
     fbs.Base.addMsg(builder, msg);
-    fbs.Base.addMsgType(builder, fbs.Any.QueryRes);
+    fbs.Base.addMsgType(builder, fbs.Any.Response);
     fbs.Base.addRequestId(builder, requestId);
     builder.finish(fbs.Base.endBase(builder));
     
@@ -151,6 +151,16 @@ export default class Client {
         return query;
       case fbs.Any.Insert:
         return insert;
+      case fbs.Any.Upsert:
+        return upsert;
+      case fbs.Any.Replace:
+        return replace;
+      case fbs.Any.Update: 
+        return update;
+      case fbs.Any.Remove:
+        return remove;
+      case fbs.Any.Watch:
+        return watch;
       default:
         return null;
     }

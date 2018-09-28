@@ -1,11 +1,13 @@
 import * as r from 'rethinkdb';
 import { makeQuery } from './makeQuery';
+import * as fbs from '../msg_generated';
 
-export async function watch(rawRequest, collections, send, errorHandle, dbConnection) {
+export async function watch(base: fbs.Base, collections, send, errorHandle, dbConnection) {
   try {
-    const { collection } = rawRequest;
+    const msg = new fbs.Query();
+    base.msg(msg);
     const conn = dbConnection.connection();
-    const res: r.Cursor = await (makeQuery(rawRequest, collections) as any).changes({
+    const res: r.Cursor = await (makeQuery(msg, collections) as any).changes({
       includeInitial: true,
       includeStates: false,
       squash: false,
@@ -16,7 +18,7 @@ export async function watch(rawRequest, collections, send, errorHandle, dbConnec
     (res as any).eachAsync(item => {
       send({data: [item]})
     }).then(() => {
-      send({state: 'complete'});
+      send({done: true});
     })
     return () => {
       if (res) {

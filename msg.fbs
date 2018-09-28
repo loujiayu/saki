@@ -2,9 +2,13 @@ union Any {
   Query,
   Auth,
   AuthRes,
-  QueryRes,
   Insert,
-  InsertRes
+  Upsert,
+  Replace,
+  Update,
+  Remove,
+  Response,
+  Watch,
 }
 
 enum AuthType: byte {
@@ -21,20 +25,42 @@ table Query {
   single: bool;
 }
 
+table Watch {
+  collection: string;
+}
+
+table Remove {
+  selector: string;
+  collection: string;
+}
+
+table Update {
+  selector: string;
+  data: [ubyte];
+  collection: string;
+}
+
 table Insert {
   data: [ubyte];
   collection: string;
   options: string;
 }
 
-table InsertRes {
-  done: bool;
+table Replace {
+  data: [ubyte];
+  collection: string;
 }
 
-table QueryRes {
+table Response {
   done: bool;
   data: [ubyte];
   error: string;
+}
+
+table Upsert {
+  selector: string;
+  collection: string;
+  data: [ubyte];
 }
 
 table Auth {

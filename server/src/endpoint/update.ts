@@ -1,7 +1,15 @@
 import * as r from 'rethinkdb';
+import * as fbs from '../msg_generated';
+import { decodeToJSObj } from '../utils/utils';
 
-export async function update({collection, selector, data}, collections, send, errorHandle, dbConnection) {
+export async function update(base: fbs.Base, collections, send, errorHandle, dbConnection) {
   try {
+    const msg = new fbs.Update();
+    base.msg(msg);
+    const collection = msg.collection();
+    const selector = JSON.parse(msg.selector()!);
+    const data = decodeToJSObj(msg);
+
     const conn = dbConnection.connection();
     const table = collections.get(collection).table;
     let query;
@@ -22,7 +30,7 @@ export async function update({collection, selector, data}, collections, send, er
     }
 
     send({
-      state: 'complete',
+      done: true,
       data: res
     })
   } catch (e) {

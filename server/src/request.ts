@@ -67,15 +67,15 @@ export default class Request {
 
       const encoder = new TextEncoder();
       const d = encoder.encode(JSON.stringify(data || []));
-      const dataOffset = fbs.QueryRes.createDataVector(builder, d);
+      const dataOffset = fbs.Response.createDataVector(builder, d);
 
-      fbs.QueryRes.startQueryRes(builder);
-      fbs.QueryRes.addData(builder, dataOffset);
-      fbs.QueryRes.addDone(builder, done);
-      const msg = fbs.QueryRes.endQueryRes(builder);
+      fbs.Response.startResponse(builder);
+      fbs.Response.addData(builder, dataOffset);
+      fbs.Response.addDone(builder, done);
+      const msg = fbs.Response.endResponse(builder);
       fbs.Base.startBase(builder);
       fbs.Base.addMsg(builder, msg);
-      fbs.Base.addMsgType(builder, fbs.Any.QueryRes);
+      fbs.Base.addMsgType(builder, fbs.Any.Response);
       fbs.Base.addRequestId(builder, this.id);
       builder.finish(fbs.Base.endBase(builder));
       this.client.sendResponse(builder.asUint8Array());

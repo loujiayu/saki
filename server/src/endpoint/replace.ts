@@ -1,7 +1,14 @@
 import * as r from 'rethinkdb';
+import * as fbs from '../msg_generated';
+import { decodeToJSObj } from '../utils/utils';
 
-export async function replace({collection, data}, collections, send, errorHandle, dbConnection) {
+export async function replace(base: fbs.Base, collections, send, errorHandle, dbConnection) {
   try {
+    const msg = new fbs.Insert();
+    base.msg(msg);
+    const collection = msg.collection();
+    const data = decodeToJSObj(msg);
+
     const conn = dbConnection.connection();
     const result: r.WriteResult =
       await (collections.get(collection).table.get(data.id) as any).replace(data).run(conn);
@@ -16,7 +23,7 @@ export async function replace({collection, data}, collections, send, errorHandle
     }
 
     send({
-      state: 'complete',
+      done: true,
       data: res
     })
   } catch (e) {
