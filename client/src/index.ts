@@ -8,7 +8,7 @@ import { errorHandle } from './collection';
 import * as fbs from './msg_generated';
 
 const defaultHost = typeof window !== 'undefined' && window.location &&
-  `${window.location.host}` || 'localhost:8000';
+  `${window.location.host}` || 'localhost:8013';
 const defaultSecure = typeof window !== 'undefined' && window.location &&
   window.location.protocol === 'https:' || false;
 

@@ -16,7 +16,7 @@ let server;
 const sk = new Saki();
 
 beforeAll(async () => {
-  server = await SakiServer.createServer(http.createServer().listen(8000), {
+  server = await SakiServer.createServer(http.createServer().listen(8013), {
     projectName: db.name,
     rdbPort: db.port,
     rdbHost: db.host,

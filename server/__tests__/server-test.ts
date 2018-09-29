@@ -149,7 +149,7 @@ function createReplaceBuffer(doc) {
 }
 
 beforeAll(() => {
-  return SakiServer.createServer(http.createServer().listen(8000), {
+  return SakiServer.createServer(http.createServer().listen(8013), {
     projectName: db.name,
     rdbPort: db.port,
     rdbHost: db.host,
