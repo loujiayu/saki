@@ -19,7 +19,7 @@ const db = {
 let conn;
 let server;
 let client;
-const rethinkTestTable = r.table('test');
+const rethinkTestTable = r.db('saki').table('test');
 
 function createDataVector(
   buffer,
