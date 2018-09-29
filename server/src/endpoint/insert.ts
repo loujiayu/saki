@@ -1,24 +1,20 @@
 import * as r from 'rethinkdb';
 import * as fbs from '../msg_generated';
 import { decodeToJSObj } from '../utils/utils';
+import Request from '../request';
 
-export async function insert(
-  base: fbs.Base,
-  collections,
-  send,
-  errorHandle,
-  dbConnection,
-  validate
-) {
+export async function insert(request: Request) {
   try {
     const msg = new fbs.Insert();
-    base.msg(msg);
+    request.reqBase.msg(msg);
     const collection = msg.collection();
-
-    const valid = validate(base, collection);
+    request.collection = collection!;
+    
+    const valid = request.client.validate(request.reqBase, collection!);
     if (!valid)
-      return errorHandle(`insert in table ${collection} is not allowed`);
+      return request.sendError(`insert in table ${collection} is not allowed`);
 
+    const {dbConnection, collections} = request.client.server;
     const data = decodeToJSObj(msg);
 
     let options = msg.options();
@@ -26,7 +22,7 @@ export async function insert(
 
     const conn = dbConnection.connection();
     const result: r.WriteResult =
-      await collections.get(collection).table.insert(data, options || {}).run(conn);
+      await collections.get(collection!)!.table.insert(data, (options || {} as any)).run(conn);
 
     const { first_error, generated_keys, ...other } = result;
     const res: Object[] = [];
@@ -38,12 +34,12 @@ export async function insert(
     } else {
       res.push(other);
     }
-    send({
+    request.sendData({
       done: true,
       data: res
     });
   } catch (e) {
-    errorHandle(e.message);
+    request.sendError(e.message);
   }
 
 }

@@ -382,7 +382,7 @@ describe('upsert', () => {
   });
 });
 
-describe.only('replace', () => {
+describe('replace', () => {
   let testID = 'replace-test-id';
   let mockSendResponse;
   let mockSendError;
@@ -405,7 +405,7 @@ describe.only('replace', () => {
   });
 });
 
-describe('cache', () => {
+describe.only('cache', () => {
   let testID = 'cache-test-id';
   let mockSendResponse;
   let mockSendError;
@@ -427,22 +427,16 @@ describe('cache', () => {
   });
 
   test('remove cache after updating', async () => {
-    const options = { collection: 'test', selector: testID }
-    await client.handleRequest({
-      type: 'query',
-      user: null,
-      options
-    })
-    const cacheKey = 'test-null';
-    let cacheValue = await getCache(cacheKey, options);
+    // const options = { collection: 'test', selector: testID }
+    await client.handleRequest(createQueryBuffer(testID));
+    const cacheHashKey = 'test-null';
+    const cacheKey = `test-${JSON.stringify(testID)}`;
+    let cacheValue = await getCache(cacheHashKey, cacheKey);
 
-    expect(cacheValue).toEqual([{ id: 'cache-test-id', name: 'john' }]);
-    await client.handleRequest({
-      type: 'update',
-      user: null,
-      options: { collection: 'test', selector: testID, data: { name: 'nane' } }
-    })
-    cacheValue = await getCache(cacheKey, options);
+    expect(cacheValue).toEqual({ id: 'cache-test-id', name: 'john' });
+
+    await client.handleRequest(createUpdateBuffer(testID, { name: 'nane' }));
+    cacheValue = await getCache(cacheHashKey, cacheKey);
     expect(cacheValue).toBeNull();
   })
 })

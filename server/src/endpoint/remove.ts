@@ -1,30 +1,26 @@
 import * as r from 'rethinkdb';
 import * as fbs from '../msg_generated';
+import Request from '../request';
 
-export async function remove(
-  base: fbs.Base,
-  collections,
-  send,
-  errorHandle,
-  dbConnection,
-  validate
-) {
+export async function remove(request: Request) {
   try {
     const msg = new fbs.Remove();
-    base.msg(msg);
+    request.reqBase.msg(msg);
     const collection = msg.collection();
+    request.collection = collection!;
 
-    const valid = validate(base, collection);
+    const valid = request.client.validate(request.reqBase, collection!);
     if (!valid)
-      return errorHandle(`remove in table ${collection} is not allowed`);
+      return request.sendError(`remove in table ${collection} is not allowed`);
 
     let selector = msg.selector();
     if (selector) {
       selector = JSON.parse(selector);
     }
 
+    const {dbConnection, collections} = request.client.server;
     const conn = dbConnection.connection();
-    const table = collections.get(collection).table;
+    const table = collections.get(collection!)!.table;
     let result: r.WriteResult;
     if (typeof selector === 'string') {
       result = await (table.get(selector) as any).delete().run(conn);
@@ -43,11 +39,11 @@ export async function remove(
       data.push(other);
     }
 
-    send({
+    request.sendData({
       done: true,
       data
     })
   } catch (e) {
-    errorHandle(e.message)
+    request.sendError(e.message)
   }
 }

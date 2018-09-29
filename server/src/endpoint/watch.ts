@@ -1,24 +1,21 @@
 import * as r from 'rethinkdb';
 import { makeQuery } from './makeQuery';
 import * as fbs from '../msg_generated';
+import Request from '../request';
 
-export async function watch(
-  base: fbs.Base,
-  collections,
-  send,
-  errorHandle,
-  dbConnection,
-  validate
-) {
+export async function watch(request: Request) {
   try {
     const msg = new fbs.Query();
-    base.msg(msg);
+    request.reqBase.msg(msg);
     const collection = msg.collection();
-    const valid = validate(base, collection);
+    request.collection = collection!;
+
+    const valid = request.client.validate(request.reqBase, collection!);
 
     if (!valid)
-      return errorHandle(`watch in table ${collection} is not allowed`);
+      return request.sendError(`watch in table ${collection} is not allowed`);
 
+    const {dbConnection, collections} = request.client.server;
     const conn = dbConnection.connection();
     const res: r.Cursor = await (makeQuery(msg, collections) as any).changes({
       includeInitial: true,
@@ -29,7 +26,7 @@ export async function watch(
       includeTypes: true
     }).run(conn);
     (res as any).eachAsync(item => {
-      send({data: [item]})
+      request.sendData({data: [item]})
     })
     return () => {
       if (res) {
@@ -37,6 +34,6 @@ export async function watch(
       }
     }
   } catch (e) {
-    return errorHandle(e.message)
+    return request.sendError(e.message)
   }
 }

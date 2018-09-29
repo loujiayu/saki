@@ -1,29 +1,26 @@
 import * as r from 'rethinkdb';
 import * as fbs from '../msg_generated';
 import { decodeToJSObj } from '../utils/utils';
+import Request from '../request';
 
-export async function update(
-  base: fbs.Base,
-  collections,
-  send,
-  errorHandle,
-  dbConnection,
-  validate
-) {
+export async function update(request: Request) {
   try {
     const msg = new fbs.Update();
-    base.msg(msg);
+    request.reqBase.msg(msg);
     const collection = msg.collection();
-
-    const valid = validate(base, collection);
+    request.collection = collection!;
+    
+    const valid = request.client.validate(request.reqBase, collection!);
     if (!valid)
-      return errorHandle(`update in table ${collection} is not allowed`);
+      return request.sendError(`update in table ${collection} is not allowed`);
+
+    const {dbConnection, collections} = request.client.server;
 
     const selector = JSON.parse(msg.selector()!);
     const data = decodeToJSObj(msg);
 
     const conn = dbConnection.connection();
-    const table = collections.get(collection).table;
+    const table = collections.get(collection!)!.table;
     let query;
     if (typeof selector === 'string') {
       query = table.get(selector);
@@ -41,11 +38,11 @@ export async function update(
       res.push(other);
     }
 
-    send({
+    request.sendData({
       done: true,
       data: res
     })
   } catch (e) {
-    errorHandle(e.message)
+    request.sendError(e.message)
   }
 }

@@ -13,9 +13,9 @@ export function cleanCache(key: string) {
 }
 
 export async function setCache(hashKey, key, value) {
-  await redisClient.hset(hashKey, JSON.stringify(key), JSON.stringify(value));
+  await redisClient.hset(hashKey, key, JSON.stringify(value));
 }
 
 export async function getCache(hashKey, key) {
-  return JSON.parse(await redisClient.hget(hashKey, JSON.stringify(key)));
+  return JSON.parse(await redisClient.hget(hashKey, key));
 }

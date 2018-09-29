@@ -4,7 +4,7 @@ import { flatbuffers } from 'flatbuffers';
 import * as fbs from './msg_generated';
 
 import Server from './server';
-import Request, { IRequest } from './request';
+import Request from './request';
 import Auth from './auth';
 import logger from './logger';
 import { query, insert, remove, update, upsert, replace, watch } from './endpoint';
@@ -51,14 +51,6 @@ export default class Client {
       'message',
       data => this.errorWrapSocket(() => this.handleHandshake(data))
     );
-  }
-
-  parseRequest(data: string): IRequest {
-    if (typeof data === 'string') {
-      return JSON.parse(data);
-    } else {
-      return data;
-    }
   }
 
   sendResponse(data: Uint8Array) {
