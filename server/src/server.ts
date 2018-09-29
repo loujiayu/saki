@@ -47,7 +47,7 @@ export default class Server {
     this.dbConnection = new ReqlConnection(this, this.opts);
     this.auth = new Auth(this, this.opts);
 
-    this.useCache = true;
+    this.useCache = typeof this.opts.useCache === 'boolean' ? this.opts.useCache : true;
   }
 
   static async createServer(httpServer, opts) {
@@ -61,7 +61,6 @@ export default class Server {
       const conn = await this.dbConnection.connect();
       for (const collection in this.rules) {
         const rule = this.rules[collection];
-        this.collections.set(collection, new Collection(this.opts.projectName, collection, rule));
         await this.createIndex(rule, collection, conn);
       }
     } catch (error) {
@@ -73,6 +72,7 @@ export default class Server {
 
   async createIndex(rule, collection, conn) {
     try {
+      this.collections.set(collection, new Collection(this.opts.projectName, collection, rule));
       await ensureTable(this.dbConnection.db, collection, conn);
       if (rule.indexes) {
         await Promise.all(

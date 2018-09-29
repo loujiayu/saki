@@ -25,9 +25,18 @@ const server = http.createServer((req, res) => {
   res.end(content);
 }).listen(8100);
 
+const changedIndex = ['index2', 'index1'];
+
 SakiServer.createServer(server, {
   projectName: db.name,
   rdbPort: db.port,
   rdbHost: db.host,
-  rules: ['test', 'projects']
+  useCache: false,
+  rules: {test: {
+    indexes: [changedIndex],
+    update: () => true,
+    insert: () => true,
+    remove: () => true,
+    fetch: () => true
+  }}
 });

@@ -8,15 +8,19 @@ function find(query, selector, indexes) {
   } else if (typeof selector === 'object') {
     if (indexes) {
       const keys = Object.keys(selector);
+      let values;
       const useIndex = indexes.some(index => {
         if (Array.isArray(index)) {
-          return arraysEqual(index.sort(), keys.sort());
+          const flag: boolean = arraysEqual(index.sort(), keys.sort());
+          if (flag) {
+            values = index.map(i => selector[i]);
+          }
+          return flag;
         }
         return false;
       });
-      
       if (useIndex) {
-        return query.getAll(keys, {index: compoundIndexGenerator(keys)});
+        return query.getAll(values, {index: compoundIndexGenerator(keys)});
       }
     }
 

@@ -8,7 +8,7 @@ export async function query(request: Request) {
     request.reqBase.msg(msg);
     const collection = msg.collection();
     request.collection = collection!;
-    
+
     const valid = request.client.validate(request.reqBase, collection!);
     if (!valid)
       return request.sendError(`query in table ${collection} is not allowed`);

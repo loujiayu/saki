@@ -28,7 +28,6 @@ export default class Request {
 
   sendData(resp) {
     this.setOrCleanCache(resp);
-
     const {done, data} = resp;
     const builder = new flatbuffers.Builder();
 
@@ -58,13 +57,13 @@ export default class Request {
       if (this.client.server.useCache) {
         if (this.reqBase.msgType() === fbs.Any.Query) {
           if (done) {
-            console.log(`set cache ${this.cacheHashKey} ${this.cacheKey}: ${data}`);
+            // console.log(`set cache ${this.cacheHashKey} ${this.cacheKey}: ${data}`);
             await setCache(this.cacheHashKey, this.cacheKey, data || this.tmpResultMap);
           } else {
             this.tmpResultMap = [...this.tmpResultMap, data];
           }
         } else {
-          console.log('clean cache...');
+          // console.log('clean cache...');
           if (!this.cacheHashKey) {
             this.cacheHashKey = `${this.collection}-${this.reqBase.user()}`
           }
@@ -87,9 +86,9 @@ export default class Request {
         this.cacheHashKey = `${collection}-${user}`;
         this.cacheKey = `${collection}-${selector}`;
         
-        console.log(`get cache ${this.cacheHashKey} ${this.cacheKey}`);
+        // console.log(`get cache ${this.cacheHashKey} ${this.cacheKey}`);
         const cacheValue = await getCache(this.cacheHashKey, this.cacheKey);
-        console.log(`cache value: ${cacheValue}`);
+        // console.log(`cache value: ${cacheValue}`);
         if (cacheValue) {
           return cacheValue;
         } else {

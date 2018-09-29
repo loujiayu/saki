@@ -53,9 +53,9 @@ function createInsertBuffer(doc, options?) {
   return builder.asUint8Array();
 }
 
-function createQueryBuffer(selector, limit?) {
+function createQueryBuffer(selector?, limit?, collection?) {
   const builder = new flatbuffers.Builder();
-  const collection_ = builder.createString('test');
+  const collection_ = builder.createString(collection || 'test');
   let selector_;
   if (selector) {
     selector_ = builder.createString(JSON.stringify(selector));
@@ -405,7 +405,7 @@ describe('replace', () => {
   });
 });
 
-describe.only('cache', () => {
+describe('cache', () => {
   let testID = 'cache-test-id';
   let mockSendResponse;
   let mockSendError;
@@ -452,32 +452,18 @@ describe('validate err', () => {
   afterEach(() => {
     server.useCache = true;
   })
-  test('validate', () => {
-    client.handleRequest({
-      type: 'query',
-      user: null,
-      options: { collection: testTableName }
-    });
+  test('validate', async () => {
+    await client.handleRequest(createQueryBuffer(null, null, testTableName));
     expect(mockSendError).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('compound index', () => {
   const changedIndex = ['index1', 'index2'];
-  beforeEach(() => {
-    return server.changeRules({
+  beforeEach(async () => {
+    await server.changeRules({
       test: {
         indexes: [changedIndex],
-        update: () => true,
-        insert: () => true,
-        remove: () => true,
-        fetch: () => true
-      }
-    });
-  });
-  beforeAll(() => {
-    return server.changeRules({
-      test: {
         update: () => true,
         insert: () => true,
         remove: () => true,
