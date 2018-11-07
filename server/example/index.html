@@ -8,87 +8,31 @@
   <body>
     <script src="/client/dist/client.js"></script>
     <script>
-      // const sk = new Saki();
       const sk = new Saki();
       sk.connect('unauthenticated');
-      // sk.collection('projes').fetch().subscribe({
-      //   error: err => {
-      //     console.log(err);
-      //   },
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // sk.collection('test').insert({
-      //   index1: 10,
-      //   index2: 20,
-      //   id: 'testID'
-      // }).subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   }
-      // })
+      sk.collection('projes').fetch().subscribe({
+        error: err => {
+          console.log(err);
+        },
+        next: val => {
+          console.log(val);
+        },
+        complete: () => {
+          console.log('complete');
+        }
+      })
+      sk.collection('test').insert({
+        index1: 10,
+        index2: 20,
+        id: 'testID'
+      }).subscribe({
+        next: val => {
+          console.log(val);
+        }
+      })
       sk.collection('test').find({index1: 10,index2: 20}).fetch().subscribe(val => {
         console.log(val);
       })
-      // sk.collection('projects').find('devUser-21').fetch().subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('object');
-      //   },
-      // })
-      // const observable = sk.collection('test').insert({id: 'test-insuesssrt'});
-      // observable.subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // observable.subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // sk.collection('test').insert([{name: 'nnssa'}, {age: 293}]).subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // sk.collection('test').update({id: '66ecb331-9a65-4758-a833-f3e587c23c57'}, {command: 'update'}).subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // const handler = sk.collection('test').watch().subscribe({
-      //   next: val => {
-      //     console.log(val);
-      //   },
-      //   complete: () => {
-      //     console.log('complete');
-      //   }
-      // })
-      // handler.unsubscribe();
-      // console.log(handler);
-      // const ss = sk.collection('test');
-      // ss.watch().subscribe(val => {
-      //   console.log(val);
-      // })
     </script>
   </body>
 </html>
