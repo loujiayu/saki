@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "main": "dist/client.js",
   "license": "MIT",
-  "author": "Jan Lou aa",
+  "author": "njcasnns sfa sfa ",
   "scripts": {
     "dev": "rollup -w -c build/config.js --environment TARGET:web-dev",
     "test": "jest --config ./scripts/jest/config.js"
